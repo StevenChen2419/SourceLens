@@ -1,5 +1,7 @@
 """Source text and chunk metadata shared by the local document services."""
 
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 
@@ -15,3 +17,10 @@ class DocumentChunk(BaseModel):
     chunk_id: str = Field(min_length=1)
     chunk_index: int = Field(ge=0)
     text: str = Field(min_length=1)
+
+
+class DocumentUploadResponse(BaseModel):
+    document_id: UUID
+    filename: str
+    page_count: int = Field(ge=1)
+    chunk_count: int = Field(ge=1)

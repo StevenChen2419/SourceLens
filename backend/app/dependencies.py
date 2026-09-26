@@ -6,6 +6,7 @@ from fastapi import Depends
 
 from app.config import Settings
 from app.integrations.blob import BlobStore
+from app.integrations.search import SearchStore
 
 
 def get_settings() -> Settings:
@@ -15,3 +16,7 @@ def get_settings() -> Settings:
 def get_blob_store(settings: Annotated[Settings, Depends(get_settings)]) -> BlobStore:
     # SDK clients and credentials are created only when an upload is attempted.
     return BlobStore(settings.azure_storage_account_url, settings.azure_storage_container)
+
+
+def get_search_store(settings: Annotated[Settings, Depends(get_settings)]) -> SearchStore:
+    return SearchStore(settings)

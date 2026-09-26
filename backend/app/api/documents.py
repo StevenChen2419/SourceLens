@@ -5,7 +5,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
 from app.config import Settings
-from app.dependencies import get_blob_store, get_settings
+from app.dependencies import get_blob_store, get_settings, get_search_store
+from app.integrations.search import SearchError, SearchStore
+from app.integrations.embeddings import EmbeddingAPIError, EmbeddingConfigurationError, EmbeddingResponseError
+from app.services.documents import IngestionIndexingError
 from app.integrations.blob import BlobStore, BlobUploadError
 from app.models import DocumentUploadResponse
 from app.services.documents import InvalidPDFUploadError, UploadTooLargeError, upload_document
@@ -30,6 +33,7 @@ def create_document(
     file: Annotated[UploadFile, File(..., json_schema_extra={"format": "binary"})],
     settings: Annotated[Settings, Depends(get_settings)],
     blob_store: Annotated[BlobStore, Depends(get_blob_store)],
+    search_store: Annotated[SearchStore, Depends(get_search_store)],
 ) -> DocumentUploadResponse:
     # A synchronous route runs parsing, tokenization, and Azure I/O in a worker
     # thread rather than blocking the async event loop. Exactly one file is allowed.
@@ -40,6 +44,8 @@ def create_document(
             content_type=file.content_type,
             max_bytes=settings.max_upload_size_mb * 1024 * 1024,
             blob_store=blob_store,
+            settings=settings,
+            search_store=search_store,
         )
     except UploadTooLargeError as exc:
         raise HTTPException(status_code=413, detail=str(exc)) from exc
@@ -47,6 +53,12 @@ def create_document(
         raise HTTPException(status_code=415, detail=str(exc)) from exc
     except (MalformedPDFError, UnsupportedPDFError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except IngestionIndexingError as exc:
+        raise HTTPException(status_code=503, detail={
+            "message": str(exc), "document_id": exc.document_id,
+        }) from exc
+    except (SearchError, EmbeddingAPIError, EmbeddingConfigurationError, EmbeddingResponseError) as exc:
+        raise HTTPException(status_code=503, detail="Document embedding/indexing is unavailable. Check server configuration and Azure services.") from exc
     except BlobUploadError as exc:
         raise HTTPException(
             status_code=503, detail="Document storage is unavailable. Please try again later."

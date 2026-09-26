@@ -15,6 +15,22 @@ class Settings(BaseSettings):
     )
 
     app_name: str = Field(default="KnowledgeOps", min_length=1)
+    azure_search_endpoint: str | None = Field(default=None, validation_alias="AZURE_SEARCH_ENDPOINT")
+    azure_search_index_name: str = Field(
+        default="knowledgeops-chunks", validation_alias="AZURE_SEARCH_INDEX_NAME",
+        min_length=2, max_length=128, pattern=r"^[a-z0-9][a-z0-9_-]*$",
+    )
+
+    @field_validator("azure_search_endpoint", mode="before")
+    @classmethod
+    def validate_search_endpoint(cls, value: str | None) -> str | None:
+        if value is None or not value.strip():
+            return None
+        url = urlsplit(value.strip())
+        if (url.scheme != "https" or not url.hostname or url.username or url.password
+                or url.query or url.fragment or url.path not in ("", "/")):
+            raise ValueError("AZURE_SEARCH_ENDPOINT must be an HTTPS service URL without credentials or a path")
+        return value.strip().rstrip("/")
     azure_embedding_endpoint: str | None = Field(default=None, validation_alias="AZURE_EMBEDDING_ENDPOINT")
     azure_embedding_deployment: str | None = Field(default=None, validation_alias="AZURE_EMBEDDING_DEPLOYMENT")
     embedding_dimensions: int = Field(default=1536, ge=1, le=1536, validation_alias="EMBEDDING_DIMENSIONS")

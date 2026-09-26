@@ -24,3 +24,11 @@ class DocumentUploadResponse(BaseModel):
     filename: str
     page_count: int = Field(ge=1)
     chunk_count: int = Field(ge=1)
+
+
+class EmbeddedChunk(BaseModel):
+    chunk: DocumentChunk
+    vector: list[float]
+    model: str
+    deployment: str
+    dimensions: int = Field(gt=0)

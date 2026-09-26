@@ -15,6 +15,31 @@ class Settings(BaseSettings):
     )
 
     app_name: str = Field(default="KnowledgeOps", min_length=1)
+    azure_embedding_endpoint: str | None = Field(default=None, validation_alias="AZURE_EMBEDDING_ENDPOINT")
+    azure_embedding_deployment: str | None = Field(default=None, validation_alias="AZURE_EMBEDDING_DEPLOYMENT")
+    embedding_dimensions: int = Field(default=1536, ge=1, le=1536, validation_alias="EMBEDDING_DIMENSIONS")
+    embedding_batch_size: int = Field(default=16, ge=1, le=32, validation_alias="EMBEDDING_BATCH_SIZE")
+
+    @field_validator("azure_embedding_endpoint", mode="before")
+    @classmethod
+    def validate_embedding_endpoint(cls, value: str | None) -> str | None:
+        if value is None or not value.strip():
+            return None
+        url = urlsplit(value.strip())
+        if (url.scheme != "https" or not url.hostname or url.username or url.password
+                or url.query or url.fragment or url.path.rstrip("/") != "/openai/v1"):
+            raise ValueError("AZURE_EMBEDDING_ENDPOINT must be an HTTPS /openai/v1/ URL without credentials")
+        return value.strip().rstrip("/") + "/"
+
+    @field_validator("azure_embedding_deployment", mode="before")
+    @classmethod
+    def validate_embedding_deployment(cls, value: str | None) -> str | None:
+        if value is None or not value.strip():
+            return None
+        value = value.strip()
+        if any(character.isspace() for character in value) or "/" in value:
+            raise ValueError("AZURE_EMBEDDING_DEPLOYMENT must be a deployment name")
+        return value
     azure_storage_account_url: str | None = Field(
         default=None, validation_alias="AZURE_STORAGE_ACCOUNT_URL"
     )

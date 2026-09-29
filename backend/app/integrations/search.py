@@ -2,11 +2,14 @@
 
 import json
 import math
+from itertools import islice
 from collections.abc import Sequence
 
 from azure.core.exceptions import AzureError, ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
+from azure.search.documents.models import VectorizedQuery
+from pydantic import ValidationError
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
     HnswAlgorithmConfiguration, HnswParameters, SearchField, SearchFieldDataType,
@@ -14,7 +17,7 @@ from azure.search.documents.indexes.models import (
 )
 
 from app.config import Settings
-from app.models import EmbeddedChunk
+from app.models import EmbeddedChunk, RetrievedChunk
 
 
 class SearchError(RuntimeError):
@@ -77,7 +80,7 @@ class SearchStore:
 
     def _require_endpoint(self) -> str:
         if not self.endpoint:
-            raise SearchError("Set AZURE_SEARCH_ENDPOINT before indexing documents.")
+            raise SearchError("Set AZURE_SEARCH_ENDPOINT before using Azure Search.")
         return self.endpoint
 
     def ensure_index(self) -> None:
@@ -150,3 +153,27 @@ class SearchStore:
             raise
         except AzureError as exc:
             raise SearchError("Search document inspection failed.") from exc
+
+    def hybrid_search(self, question: str, vector: list[float], top_k: int) -> list[RetrievedChunk]:
+        endpoint = self._require_endpoint()
+        if not 1 <= top_k <= 20:
+            raise ValueError("top_k must be between 1 and 20")
+        if len(vector) != self.dimensions or any(not math.isfinite(value) for value in vector):
+            raise SearchError("Question vector does not match the configured embedding dimensions/values.")
+        fields = ["document_id", "filename", "page_number", "chunk_id", "chunk_index", "text"]
+        try:
+            with DefaultAzureCredential() as credential, SearchClient(endpoint, self.index_name, credential) as client:
+                results = client.search(
+                    search_text=question, search_fields=["text"], query_type="simple",
+                    vector_queries=[VectorizedQuery(vector=vector, fields="embedding", k_nearest_neighbors=50)],
+                    select=fields, top=top_k,
+                )
+                # Consume lazy SDK results while the client is open; preserve RRF order.
+                return [RetrievedChunk(
+                    **{field: result[field] for field in fields},
+                    search_score=result.get("@search.score"),
+                ) for result in islice(results, top_k)]
+        except AzureError as exc:
+            raise SearchError("Azure Search retrieval failed. Check configuration, permissions, and connectivity.") from exc
+        except (KeyError, ValidationError) as exc:
+            raise SearchError("Azure Search returned invalid chunk metadata or scores.") from exc

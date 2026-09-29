@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class PDFPage(BaseModel):
@@ -32,3 +32,25 @@ class EmbeddedChunk(BaseModel):
     model: str
     deployment: str
     dimensions: int = Field(gt=0)
+
+
+class RetrievalRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=4000, strict=True)
+    top_k: int | None = Field(default=None, ge=1, le=20, strict=True)
+
+    @field_validator("question")
+    @classmethod
+    def strip_question(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("question must contain non-whitespace text")
+        return value
+
+
+class RetrievedChunk(DocumentChunk):
+    search_score: float | None = Field(default=None, allow_inf_nan=False)
+
+
+class RetrievalResponse(BaseModel):
+    question: str
+    results: list[RetrievedChunk]

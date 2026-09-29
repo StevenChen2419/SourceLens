@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = Field(default="KnowledgeOps", min_length=1)
+    retrieval_top_k: int = Field(default=5, ge=1, le=20, validation_alias="RETRIEVAL_TOP_K")
     azure_search_endpoint: str | None = Field(default=None, validation_alias="AZURE_SEARCH_ENDPOINT")
     azure_search_index_name: str = Field(
         default="knowledgeops-chunks", validation_alias="AZURE_SEARCH_INDEX_NAME",

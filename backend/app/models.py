@@ -1,6 +1,7 @@
 """Source text and chunk metadata shared by the local document services."""
 
 from uuid import UUID
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -54,3 +55,19 @@ class RetrievedChunk(DocumentChunk):
 class RetrievalResponse(BaseModel):
     question: str
     results: list[RetrievedChunk]
+
+
+class Citation(BaseModel):
+    source_id: str
+    document_id: str
+    filename: str
+    page_number: int = Field(ge=1)
+    chunk_id: str
+    chunk_index: int = Field(ge=0)
+
+
+class AnswerResponse(BaseModel):
+    question: str
+    status: Literal["supported", "insufficient_evidence"]
+    answer: str
+    citations: list[Citation]

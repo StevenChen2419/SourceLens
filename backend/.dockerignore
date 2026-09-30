@@ -1,0 +1,22 @@
+# Allowlist: nothing local enters the context unless explicitly needed to build.
+**
+!Dockerfile
+!.dockerignore
+!pyproject.toml
+!requirements.lock
+!build-requirements.lock
+!app/
+!app/**/*.py
+# Defense in depth for accidental files below app/.
+**/.env*
+**/*.pdf
+**/__pycache__/**
+**/.venv/**
+**/.azure/**
+**/.aws/**
+**/.ssh/**
+**/*credential*
+**/*.pem
+**/*.key
+**/evaluation/**
+**/results/**

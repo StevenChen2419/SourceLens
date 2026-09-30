@@ -1,0 +1,53 @@
+{
+  "name": "<backend-app-name>",
+  "type": "Microsoft.App/containerApps",
+  "location": "<azure-region>",
+  "identity": { "type": "SystemAssigned" },
+  "properties": {
+    "managedEnvironmentId": "<container-apps-environment-resource-id>",
+    "configuration": {
+      "activeRevisionsMode": "Single",
+      "ingress": {
+        "external": true,
+        "targetPort": 8000,
+        "transport": "auto",
+        "allowInsecure": false,
+        "ipSecurityRestrictions": [
+          { "name": "owner", "action": "Allow", "ipAddressRange": "<your-public-ip>/32" }
+        ]
+      }
+    },
+    "template": {
+      "containers": [{
+        "name": "backend",
+        "image": "ghcr.io/<owner>/knowledgeops-backend@sha256:<digest>",
+        "resources": { "cpu": 0.5, "memory": "1Gi" },
+        "env": [
+          { "name": "KNOWLEDGEOPS_ENVIRONMENT", "value": "production" },
+          { "name": "KNOWLEDGEOPS_CORS_ORIGINS", "value": "[\"https://<frontend-hostname>\"]" },
+          { "name": "AZURE_TOKEN_CREDENTIALS", "value": "ManagedIdentityCredential" },
+          { "name": "AZURE_STORAGE_ACCOUNT_URL", "value": "https://<storage-account>.blob.core.windows.net" },
+          { "name": "AZURE_STORAGE_CONTAINER", "value": "documents" },
+          { "name": "MAX_UPLOAD_SIZE_MB", "value": "10" },
+          { "name": "AZURE_SEARCH_ENDPOINT", "value": "https://<search-service>.search.windows.net" },
+          { "name": "AZURE_SEARCH_INDEX_NAME", "value": "knowledgeops-chunks" },
+          { "name": "AZURE_EMBEDDING_ENDPOINT", "value": "https://<model-resource>.openai.azure.com/openai/v1/" },
+          { "name": "AZURE_EMBEDDING_DEPLOYMENT", "value": "<existing-embedding-deployment>" },
+          { "name": "EMBEDDING_DIMENSIONS", "value": "1536" },
+          { "name": "EMBEDDING_BATCH_SIZE", "value": "16" },
+          { "name": "AZURE_GENERATION_ENDPOINT", "value": "https://<model-resource>.openai.azure.com/openai/v1/" },
+          { "name": "AZURE_GENERATION_DEPLOYMENT", "value": "<existing-generation-deployment>" },
+          { "name": "GENERATION_CONTEXT_TOKENS", "value": "8000" },
+          { "name": "GENERATION_MAX_COMPLETION_TOKENS", "value": "4096" },
+          { "name": "RETRIEVAL_TOP_K", "value": "5" }
+        ],
+        "probes": [
+          { "type": "Startup", "httpGet": { "path": "/health", "port": 8000, "scheme": "HTTP" }, "initialDelaySeconds": 1, "periodSeconds": 5, "timeoutSeconds": 2, "failureThreshold": 30 },
+          { "type": "Readiness", "httpGet": { "path": "/health", "port": 8000, "scheme": "HTTP" }, "periodSeconds": 10, "timeoutSeconds": 2, "failureThreshold": 3 },
+          { "type": "Liveness", "httpGet": { "path": "/health", "port": 8000, "scheme": "HTTP" }, "periodSeconds": 30, "timeoutSeconds": 2, "failureThreshold": 3 }
+        ]
+      }],
+      "scale": { "minReplicas": 0, "maxReplicas": 1 }
+    }
+  }
+}

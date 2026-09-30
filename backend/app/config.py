@@ -1,9 +1,11 @@
 """Typed application settings loaded from the environment or backend/.env."""
 
 from pathlib import Path
+from ipaddress import ip_address
+from typing import Literal, Self
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +17,52 @@ class Settings(BaseSettings):
     )
 
     app_name: str = Field(default="KnowledgeOps", min_length=1)
+    environment: Literal["development", "production"] = "development"
+    cors_origins: list[str] = Field(default_factory=lambda: [
+        "http://localhost:5173", "http://127.0.0.1:5173",
+    ], min_length=1)
+    azure_token_credentials: str | None = Field(default=None, validation_alias="AZURE_TOKEN_CREDENTIALS")
+
+    @field_validator("cors_origins")
+    @classmethod
+    def validate_origins(cls, origins: list[str]) -> list[str]:
+        for origin in origins:
+            url = urlsplit(origin)
+            if (origin != origin.strip() or url.scheme not in ("http", "https")
+                    or not url.hostname or url.username or url.password or "*" in origin
+                    or url.path or url.query or url.fragment or origin.endswith(":")
+                    or any(character.isspace() for character in origin)):
+                raise ValueError("CORS origins must be exact HTTP(S) origins without paths, wildcards, or credentials")
+            _ = url.port  # Reject malformed/out-of-range ports.
+        return list(dict.fromkeys(origins))
+
+    @model_validator(mode="after")
+    def validate_production(self) -> Self:
+        if self.environment != "production":
+            return self
+        required = {
+            "AZURE_STORAGE_ACCOUNT_URL": self.azure_storage_account_url,
+            "AZURE_SEARCH_ENDPOINT": self.azure_search_endpoint,
+            "AZURE_EMBEDDING_ENDPOINT": self.azure_embedding_endpoint,
+            "AZURE_EMBEDDING_DEPLOYMENT": self.azure_embedding_deployment,
+            "AZURE_GENERATION_ENDPOINT": self.azure_generation_endpoint,
+            "AZURE_GENERATION_DEPLOYMENT": self.azure_generation_deployment,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            raise ValueError("Missing production configuration: " + ", ".join(missing))
+        if self.azure_token_credentials != "ManagedIdentityCredential":
+            raise ValueError("Production requires AZURE_TOKEN_CREDENTIALS=ManagedIdentityCredential")
+        for origin in self.cors_origins:
+            url = urlsplit(origin)
+            hostname = url.hostname or ""
+            try:
+                loopback = ip_address(hostname).is_loopback
+            except ValueError:
+                loopback = hostname == "localhost" or hostname.endswith(".localhost")
+            if url.scheme != "https" or loopback:
+                raise ValueError("Production CORS origins must use HTTPS and must not be localhost")
+        return self
     azure_generation_endpoint: str | None = Field(default=None, validation_alias="AZURE_GENERATION_ENDPOINT")
     azure_generation_deployment: str | None = Field(default=None, validation_alias="AZURE_GENERATION_DEPLOYMENT")
     generation_context_tokens: int = Field(default=8000, ge=500, le=20000, validation_alias="GENERATION_CONTEXT_TOKENS")

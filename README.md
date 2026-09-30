@@ -1,5 +1,7 @@
 # KnowledgeOps
 
+Production readiness is implemented for Static Web Apps Free and Container Apps Consumption. **No Azure deployment or CD is configured.** See [the manual deployment runbook](docs/deployment.md) for local image checks, managed identity/RBAC, exact CORS, probes, IP restrictions, and the commands to deploy manually. Existing evaluation artifacts and RAG behavior are unchanged.
+
 KnowledgeOps is a portfolio enterprise AI knowledge and support platform, built to demonstrate understandable, testable software engineering and applied AI engineering.
 
 The current implementation connects PDF ingestion, Azure AI Search hybrid retrieval, and grounded GPT-5-mini answers with citations. A React + TypeScript frontend provides a PDF upload panel and a question workspace. The backend provides `POST /api/answers`, independent retrieval debugging through `POST /api/retrieval`, `GET /health`, typed configuration, and tests. Semantic ranking, agents, conversation memory, and user accounts are not implemented yet.
@@ -40,6 +42,7 @@ From `frontend/`:
 
 ```powershell
 npm test
+$env:VITE_API_BASE_URL = 'https://knowledgeops-api.example.com' # Build-only placeholder; use real HTTPS origin for deployment.
 npm run build
 ```
 
@@ -396,7 +399,7 @@ az storage blob show --account-name <your-account-name> --container-name documen
 
 The backend checks extension, content type (`application/pdf` or `application/octet-stream`), PDF signature, actual file size, and extractability. It then generates a UUID, extracts and chunks locally, and uploads the unchanged original bytes. Blob names use only the generated UUID. The original filename is preserved in the response and percent-encoded UTF-8 Blob metadata (`original_filename`); `filename_encoding` documents that encoding. Uploads use `overwrite=False`.
 
-Chunks and their vectors are indexed in Azure AI Search after embedding generation and original-Blob storage. Re-uploading the same file creates a new document ID, Blob, and chunk IDs; duplicate detection is not implemented. See the consistency limitations below before retrying a failed ingestion.
+Chunks and their vectors are indexed in Azure AI Search after embedding generation and original-Blob storage. Re-uploading identical PDF bytes returns 409 without creating another document, Blob, embedding, or Search chunk. Different bytes under the same filename are accepted. See the consistency limitations below before retrying a failed ingestion.
 
 | Status | Meaning |
 | --- | --- |

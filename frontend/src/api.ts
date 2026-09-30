@@ -1,6 +1,7 @@
 import type { AnswerResponse, DocumentUploadResponse, DocumentListResponse, DocumentDeleteResponse } from './types';
 
-const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+// Vite rejects production builds without an HTTPS API origin. Local fallback is dev-only.
+const baseUrl = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://127.0.0.1:8000' : '')).replace(/\/$/, '');
 
 async function request<T>(path: string, options: RequestInit, kind: 'upload' | 'answer' | 'list' | 'delete'): Promise<T> {
   let response: Response;

@@ -1,0 +1,3 @@
+# Build tools only. Runtime dependencies come from pyproject.toml.
+setuptools>=75,<83
+wheel

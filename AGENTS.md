@@ -19,13 +19,15 @@ KnowledgeOps is a portfolio-quality enterprise AI knowledge and support platform
 
 ## Current milestone
 
-Milestone 2: Evaluation and reliability. Milestone 1 live end-to-end verification is complete.
+Production deployment readiness (explicitly authorized out of sequence). Milestone 1 and document lifecycle live verification are complete. Evaluation baselines remain preserved.
+
+Approved architecture: Static Web Apps Free, Container Apps Consumption (0.5 vCPU, 1 GiB, 0–1 replicas, one worker), system-assigned managed identity, existing Azure data/model resources, exact HTTPS CORS, and initial backend ingress IP restriction. Implement local readiness only; do not provision/change Azure resources or add deployment/CD workflows without a new request. See docs/deployment.md.
 
 Establish a repeatable evaluation baseline before tuning retrieval or generation. Live Azure evaluation is an explicit command, separate from mocked/offline unit tests.
 
 Initial scope is text-based PDFs, a shared document collection, and single-turn questions. Users should be able to upload PDFs, index their contents, ask questions, and receive grounded answers with source citations.
 
-Defer authentication, OCR, conversation memory, PostgreSQL, agent orchestration, background workers, Docker, CI/CD, and advanced monitoring until their respective milestones. OCR is outside the initial plan and requires an explicit scope decision before implementation.
+Defer authentication, OCR, conversation memory, PostgreSQL, agent orchestration, background workers, CI/CD, and advanced monitoring until explicitly authorized. Docker packaging is authorized for deployment readiness. OCR is outside the initial plan and requires an explicit scope decision before implementation.
 
 ## Planned milestone sequence
 

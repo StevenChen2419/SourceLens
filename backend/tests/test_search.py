@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+from uuid import uuid4
 
 import pytest
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError, ResourceExistsError
@@ -51,6 +52,63 @@ def test_schema_and_dimensions() -> None:
     assert fields["embedding"].vector_search_profile_name == index.vector_search.profiles[0].name
     assert index.vector_search.algorithms[0].parameters.metric == "cosine"
     validate_index(index, build_index(index.name, 1536))
+
+
+def test_document_enumeration_filters_by_uuid_and_keeps_all_pages(store, client):
+    identifier = uuid4()
+    client.search.return_value = iter([{"chunk_id": str(i)} for i in range(1100)])
+    assert len(store.document_chunks(identifier)) == 1100
+    assert client.search.call_args.kwargs["filter"] == f"document_id eq '{identifier}'"
+    assert "top" not in client.search.call_args.kwargs
+
+
+def test_document_enumeration_refuses_truncated_catalog(store, client):
+    client.search.return_value = iter([{}] * 10001)
+    with pytest.raises(SearchError, match="10,000"):
+        store.document_chunks()
+
+
+def test_deletion_batches_all_known_and_discovered_keys_and_verifies_absence(store, client):
+    identifier = uuid4()
+    client.search.side_effect = [[{"chunk_id": "extra"}], []]
+    client.delete_documents.side_effect = lambda documents: [SimpleNamespace(key=doc["chunk_id"], succeeded=True) for doc in documents]
+    keys = [f"key-{i}" for i in range(205)]
+    store.delete_document_chunks(identifier, keys)
+    batches = [call.kwargs["documents"] for call in client.delete_documents.call_args_list]
+    assert [len(batch) for batch in batches] == [100, 100, 6]
+    assert {doc["chunk_id"] for batch in batches for doc in batch} == set(keys) | {"extra"}
+    assert client.search.call_count == 2
+
+
+@pytest.mark.parametrize("response", [[], [SimpleNamespace(key="key", succeeded=False)], [SimpleNamespace(key="wrong", succeeded=True)]])
+def test_partial_or_mismatched_deletion_fails(store, client, response):
+    client.search.return_value = []
+    client.delete_documents.return_value = response
+    with pytest.raises(SearchError, match="confirm"):
+        store.delete_document_chunks(uuid4(), ["key"])
+
+
+def test_deletion_visibility_delay_is_failure_not_success(store, client):
+    client.search.return_value = [{"chunk_id": "key"}]
+    client.delete_documents.return_value = [SimpleNamespace(key="key", succeeded=True)]
+    with pytest.raises(SearchError, match="still visible"):
+        store.delete_document_chunks(uuid4(), ["key"])
+
+
+def test_delete_api_failure_and_missing_index(store, client):
+    client.search.return_value = []
+    client.delete_documents.side_effect = HttpResponseError("private")
+    with pytest.raises(SearchError, match="Search deletion failed"):
+        store.delete_document_chunks(uuid4(), ["key"])
+    client.search.side_effect = ResourceNotFoundError()
+    client.delete_documents.side_effect = ResourceNotFoundError()
+    store.delete_document_chunks(uuid4(), ["key"])
+
+
+def test_enumeration_failure_is_not_an_empty_result(store, client):
+    client.search.side_effect = HttpResponseError("private")
+    with pytest.raises(SearchError):
+        store.document_chunks()
 
 
 def test_create_missing_index(store: SearchStore, index_client: Mock) -> None:

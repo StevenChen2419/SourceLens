@@ -2,6 +2,7 @@
 
 import json
 import math
+from uuid import UUID
 from itertools import islice
 from collections.abc import Sequence
 
@@ -153,6 +154,56 @@ class SearchStore:
             raise
         except AzureError as exc:
             raise SearchError("Search document inspection failed.") from exc
+
+    def inspect_documents(self, *, limit: int) -> list[dict]:
+        """Read a bounded, unfiltered corpus sample for maintenance verification."""
+        if not 1 <= limit <= 1000:
+            raise ValueError("Inspection limit must be between 1 and 1000.")
+        try:
+            with DefaultAzureCredential() as credential, SearchClient(self._require_endpoint(), self.index_name, credential) as client:
+                results = client.search(
+                    search_text="*", top=limit,
+                    select=["chunk_id", "document_id", "filename", "page_number", "chunk_index", "text", "embedding"],
+                )
+                return list(islice(results, limit))
+        except AzureError as exc:
+            raise SearchError("Search corpus inspection failed. Check the index, RBAC, and connectivity.") from exc
+
+    def document_chunks(self, document_id: UUID | None = None) -> list[dict]:
+        """Enumerate metadata for lifecycle operations, including every SDK page."""
+        try:
+            with DefaultAzureCredential() as credential, SearchClient(self._require_endpoint(), self.index_name, credential) as client:
+                results = client.search(
+                    search_text="*", filter=f"document_id eq '{UUID(str(document_id))}'" if document_id else None,
+                    select=["document_id", "filename", "page_number", "chunk_id", "chunk_index"],
+                )
+                rows = list(islice(results, 10001))
+                if len(rows) > 10000:
+                    raise SearchError("Document management currently supports at most 10,000 chunks; no partial listing is returned.")
+                return rows
+        except ResourceNotFoundError:
+            return []
+        except AzureError as exc:
+            raise SearchError("Document enumeration failed.") from exc
+
+    def delete_document_chunks(self, document_id: UUID, known_keys: list[str]) -> None:
+        keys = set(known_keys) | {row["chunk_id"] for row in self.document_chunks(document_id)}
+        if keys:
+            try:
+                with DefaultAzureCredential() as credential, SearchClient(self._require_endpoint(), self.index_name, credential) as client:
+                    ordered = sorted(keys)
+                    for offset in range(0, len(ordered), 100):
+                        batch = ordered[offset:offset + 100]
+                        results = client.delete_documents(documents=[{"chunk_id": key} for key in batch])
+                        if (len(results) != len(batch) or {result.key for result in results} != set(batch)
+                                or any(result.succeeded is not True for result in results)):
+                            raise SearchError("Search did not confirm all chunk deletions; retry deletion.")
+            except ResourceNotFoundError:
+                pass  # An absent index contains no chunks.
+            except AzureError as exc:
+                raise SearchError("Search deletion failed; some chunks may remain. Retry deletion.") from exc
+        if self.document_chunks(document_id):
+            raise SearchError("Deleted chunks are still visible in Search. Wait briefly and retry deletion.")
 
     def hybrid_search(self, question: str, vector: list[float], top_k: int) -> list[RetrievedChunk]:
         endpoint = self._require_endpoint()

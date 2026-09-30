@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
-from app.dependencies import get_blob_store, get_settings, get_search_store
+from app.dependencies import get_blob_store, get_settings, get_search_store, get_catalog_store
 from app.integrations.search import SearchStore, SearchError
 from app.integrations.embeddings import EmbeddingAPIError
 from app.models import EmbeddedChunk
@@ -35,11 +35,12 @@ def embeddings() -> Iterator[Mock]:
 
 
 @pytest.fixture
-def client(storage: Mock, search: Mock, embeddings: Mock) -> Iterator[TestClient]:
+def client(storage: Mock, search: Mock, embeddings: Mock, catalog) -> Iterator[TestClient]:
     settings = Settings(_env_file=None, MAX_UPLOAD_SIZE_MB=1)
     app.dependency_overrides[get_settings] = lambda: settings
     app.dependency_overrides[get_blob_store] = lambda: storage
     app.dependency_overrides[get_search_store] = lambda: search
+    app.dependency_overrides[get_catalog_store] = lambda: catalog
     try:
         with TestClient(app) as test_client:
             yield test_client
@@ -78,12 +79,12 @@ def test_upload_counts_multiple_chunks(
     assert response.json()["chunk_count"] == 3
 
 
-def test_document_ids_are_unique_per_upload(
+def test_different_content_with_same_filename_has_distinct_identity(
     client: TestClient, make_pdf: Callable[[list[str]], bytes]
 ) -> None:
     files = {"file": ("source.pdf", make_pdf(["Text"]), "application/pdf")}
     first = client.post("/api/documents", files=files)
-    second = client.post("/api/documents", files=files)
+    second = client.post("/api/documents", files={"file": ("source.pdf", make_pdf(["Different text"]), "application/pdf")})
     assert first.status_code == second.status_code == 201
     assert first.json()["document_id"] != second.json()["document_id"]
 
@@ -221,3 +222,148 @@ def test_ingestion_failure_is_not_success(
         search.index_chunks.assert_not_called()
     else:
         assert response.json()["detail"]["document_id"] == str(storage.upload_pdf.call_args.kwargs["document_id"])
+
+
+@pytest.mark.parametrize("second_filename", ["first.pdf", "renamed.pdf"])
+def test_identical_bytes_return_existing_identity_without_azure_writes(client, embeddings, storage, search, make_pdf, second_filename):
+    data = make_pdf(["Identical PDF"])
+    first = client.post("/api/documents", files={"file": ("first.pdf", data, "application/pdf")})
+    duplicate = client.post("/api/documents", files={"file": (second_filename, data, "application/pdf")})
+    assert first.status_code == 201
+    assert duplicate.status_code == 409
+    assert duplicate.json()["detail"] == {
+        "code": "duplicate_document", "document_id": first.json()["document_id"],
+        "filename": "first.pdf", "state": "indexed",
+        "message": "Identical PDF already registered. No new chunks were indexed.",
+    }
+    embeddings.assert_called_once()
+    storage.upload_pdf.assert_called_once()
+    search.index_chunks.assert_called_once()
+
+
+def test_listing_contains_metadata_and_states_not_internal_keys(client, catalog, make_pdf):
+    assert client.get("/api/documents").json() == {"documents": []}
+    result = client.post("/api/documents", files={"file": ("source.pdf", make_pdf(["one", "", "three"]), "application/pdf")})
+    response = client.get("/api/documents")
+    assert response.status_code == 200
+    assert response.json()["documents"] == [result.json() | {"state": "indexed", "original_retained_on_delete": False}]
+    assert "content_hash" not in response.text and "chunk_ids" not in response.text
+    catalog.data.documents[result.json()["document_id"]].state = "indexing"
+    assert client.get("/api/documents").json()["documents"][0]["state"] == "indexing"
+
+
+def test_failed_ingestion_is_listed_and_reserves_hash(client, catalog, search, embeddings, make_pdf):
+    data = make_pdf(["partial"])
+    search.index_chunks.side_effect = SearchError("partial indexing")
+    assert client.post("/api/documents", files={"file": ("a.pdf", data, "application/pdf")}).status_code == 503
+    listing = client.get("/api/documents").json()["documents"]
+    assert len(listing) == 1 and listing[0]["state"] == "failed"
+    response = client.post("/api/documents", files={"file": ("b.pdf", data, "application/pdf")})
+    assert response.status_code == 409 and response.json()["detail"]["state"] == "failed"
+    embeddings.assert_called_once()
+
+
+def test_deletion_search_before_blob_then_hides_document_and_is_retryable(client, catalog, search, storage, make_pdf):
+    result = client.post("/api/documents", files={"file": ("a.pdf", make_pdf(["one", "two"]), "application/pdf")}).json()
+    identifier = result["document_id"]
+    operations = Mock()
+    operations.attach_mock(search.delete_document_chunks, "search")
+    operations.attach_mock(storage.delete_pdf, "blob")
+    response = client.delete(f"/api/documents/{identifier}")
+    assert response.status_code == 200
+    assert response.json() == {"document_id": identifier, "status": "deleted", "original_retained": False}
+    assert [call[0] for call in operations.mock_calls] == ["search", "blob"]
+    assert search.delete_document_chunks.call_args.args == (UUID(identifier), catalog.data.documents[identifier].chunk_ids)
+    assert len(catalog.data.documents[identifier].chunk_ids) == 2
+    assert client.get("/api/documents").json() == {"documents": []}
+    assert client.delete(f"/api/documents/{identifier}").status_code == 200
+    assert search.delete_document_chunks.call_count == 2
+
+
+@pytest.mark.parametrize("failed_stage", ["search", "blob"])
+def test_partial_delete_remains_visible_until_successful_retry(client, catalog, search, storage, make_pdf, failed_stage):
+    result = client.post("/api/documents", files={"file": ("a.pdf", make_pdf(["one"]), "application/pdf")}).json()
+    operation = search.delete_document_chunks if failed_stage == "search" else storage.delete_pdf
+    operation.side_effect = SearchError("sensitive") if failed_stage == "search" else BlobUploadError("sensitive")
+    response = client.delete(f"/api/documents/{result['document_id']}")
+    assert response.status_code == 503 and "sensitive" not in response.text
+    assert client.get("/api/documents").json()["documents"][0]["state"] == "deleting"
+    if failed_stage == "search":
+        storage.delete_pdf.assert_not_called()
+    operation.side_effect = None
+    assert client.delete(f"/api/documents/{result['document_id']}").status_code == 200
+    assert client.get("/api/documents").json() == {"documents": []}
+
+
+def test_hash_is_released_only_after_successful_deletion(client, search, make_pdf):
+    data = make_pdf(["reupload"])
+    files = {"file": ("a.pdf", data, "application/pdf")}
+    first = client.post("/api/documents", files=files).json()
+    search.delete_document_chunks.side_effect = SearchError("still visible")
+    assert client.delete(f"/api/documents/{first['document_id']}").status_code == 503
+    assert client.post("/api/documents", files=files).status_code == 409
+    search.delete_document_chunks.side_effect = None
+    assert client.delete(f"/api/documents/{first['document_id']}").status_code == 200
+    second = client.post("/api/documents", files=files)
+    assert second.status_code == 201
+    assert second.json()["document_id"] != first["document_id"]
+
+
+def test_unknown_and_invalid_ids_do_not_delete(client, search, storage):
+    from uuid import uuid4
+    assert client.delete(f"/api/documents/{uuid4()}").status_code == 404
+    assert client.delete("/api/documents/not-a-uuid").status_code == 422
+    search.delete_document_chunks.assert_not_called()
+    storage.delete_pdf.assert_not_called()
+
+
+def test_catalog_conflict_blocks_upload_and_delete(client, catalog, embeddings, search, storage, make_pdf):
+    from uuid import uuid4
+    catalog.busy = True
+    assert client.post("/api/documents", files={"file": ("a.pdf", make_pdf(["busy"]), "application/pdf")}).status_code == 409
+    assert client.delete(f"/api/documents/{uuid4()}").status_code == 409
+    embeddings.assert_not_called()
+    storage.upload_pdf.assert_not_called()
+    search.delete_document_chunks.assert_not_called()
+
+
+def test_catalog_reservation_failure_prevents_ingestion(client, catalog, embeddings, storage, make_pdf):
+    from app.integrations.catalog import CatalogError
+    catalog.save_error = CatalogError("unavailable")
+    response = client.post("/api/documents", files={"file": ("a.pdf", make_pdf(["reserved"]), "application/pdf")})
+    assert response.status_code == 503
+    embeddings.assert_not_called()
+    storage.upload_pdf.assert_not_called()
+
+
+def test_final_catalog_save_failure_does_not_claim_success(client, catalog, embeddings, make_pdf):
+    from app.integrations.catalog import CatalogError
+    original = embeddings.side_effect
+    def embed_then_fail_save(chunks, settings):
+        catalog.save_error = CatalogError("final save failed")
+        return original(chunks, settings)
+    embeddings.side_effect = embed_then_fail_save
+    response = client.post("/api/documents", files={"file": ("a.pdf", make_pdf(["saved"]), "application/pdf")})
+    assert response.status_code == 503
+    assert next(iter(catalog.data.documents.values())).state == "indexing"
+
+
+def test_delete_final_save_failure_remains_retryable(client, catalog, storage, make_pdf):
+    from app.integrations.catalog import CatalogError
+    result = client.post("/api/documents", files={"file": ("a.pdf", make_pdf(["delete save"]), "application/pdf")}).json()
+    identifier = result["document_id"]
+    def lose_catalog_write(_document_id):
+        catalog.save_error = CatalogError("unavailable")
+    storage.delete_pdf.side_effect = lose_catalog_write
+    assert client.delete(f"/api/documents/{identifier}").status_code == 503
+    assert catalog.data.documents[identifier].state == "deleting"
+    catalog.save_error = None
+    storage.delete_pdf.side_effect = None
+    assert client.delete(f"/api/documents/{identifier}").status_code == 200
+
+
+def test_legacy_metadata_failure_is_explicit_not_an_empty_catalog(client, catalog, search):
+    catalog.data.initialized = False
+    search.document_chunks.return_value = [{"document_id": "not-a-pdf-uuid"}]
+    assert client.get("/api/documents").status_code == 503
+    assert not catalog.data.initialized

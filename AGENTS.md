@@ -19,7 +19,9 @@ KnowledgeOps is a portfolio-quality enterprise AI knowledge and support platform
 
 ## Current milestone
 
-Milestone 1: RAG document assistant.
+Milestone 2: Evaluation and reliability. Milestone 1 live end-to-end verification is complete.
+
+Establish a repeatable evaluation baseline before tuning retrieval or generation. Live Azure evaluation is an explicit command, separate from mocked/offline unit tests.
 
 Initial scope is text-based PDFs, a shared document collection, and single-turn questions. Users should be able to upload PDFs, index their contents, ask questions, and receive grounded answers with source citations.
 

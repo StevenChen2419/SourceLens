@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { uploadDocument } from '../api';
 import type { DocumentUploadResponse } from '../types';
 
-export function UploadPanel() {
+export function UploadPanel({ onDocumentsChanged }: { onDocumentsChanged?: () => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,6 +36,7 @@ export function UploadPanel() {
       setError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
     } finally {
       setBusy(false);
+      onDocumentsChanged?.();
     }
   }
 

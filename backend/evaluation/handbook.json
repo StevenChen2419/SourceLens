@@ -1,0 +1,425 @@
+{
+  "version": "1.0",
+  "description": "26 cases reviewed against the six-page knowledgeops-retrieval-test.pdf. See handbook-reference.md for the source text and SHA-256. Expected sources are required physical PDF pages; no live scores are included.",
+  "cases": [
+    {
+      "id": "handbook-01",
+      "category": "direct",
+      "section": "Vacation and Leave",
+      "question": "How many vacation days do full-time employees receive per calendar year?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 1
+        }
+      ],
+      "criterion": "15 paid vacation days per calendar year.",
+      "required_patterns": [
+        "\\b(15|fifteen)\\b",
+        "\\b(vacation|paid.*leave|paid.*time off)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-02",
+      "category": "paraphrase",
+      "section": "Vacation and Leave",
+      "question": "How much unused holiday time can I bring into next year?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 1
+        }
+      ],
+      "criterion": "Up to five unused vacation days can carry over.",
+      "required_patterns": [
+        "\\b(5|five)\\b",
+        "\\b(carry|roll|unused|next|following)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-03",
+      "category": "semantic",
+      "section": "Vacation and Leave",
+      "question": "I need to take time away to care for an ill parent. Which paid allowance covers this?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 1
+        }
+      ],
+      "criterion": "Paid sick leave covers caring for an immediate family member.",
+      "required_patterns": [
+        "\\bsick\\b",
+        "\\b(family|parent)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-04",
+      "category": "direct",
+      "section": "Remote Work",
+      "question": "How many days per week may employees work remotely, and whose approval is required?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 2
+        }
+      ],
+      "criterion": "Up to three days per week with manager approval.",
+      "required_patterns": [
+        "\\b(3|three)\\b",
+        "\\b(week|weekly)\\b",
+        "\\bmanager\\b",
+        "\\bapprov"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-05",
+      "category": "paraphrase",
+      "section": "Remote Work",
+      "question": "How many days each week am I allowed to do my job from home?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 2
+        }
+      ],
+      "criterion": "Up to three days per week with manager approval.",
+      "required_patterns": [
+        "\\b(3|three)\\b",
+        "\\b(week|weekly)\\b",
+        "\\bmanager\\b",
+        "\\bapprov"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-06",
+      "category": "semantic",
+      "section": "Remote Work",
+      "question": "Can my supervisor ask me to come in more often while a new colleague is getting started?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 2
+        }
+      ],
+      "criterion": "Yes. Managers may temporarily require additional in-office attendance for onboarding.",
+      "required_patterns": [
+        "\\b(onboard\\w*|new (colleague|employee|hire))\\b",
+        "\\b(office|attendance|come in)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-07",
+      "category": "direct",
+      "section": "IT Support and Passwords",
+      "question": "What should I do if the self-service password reset portal fails?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 3
+        }
+      ],
+      "criterion": "Contact the help desk.",
+      "required_patterns": [
+        "\\b(help\\s*desk|service\\s*desk)\\b",
+        "\\b(contact|reach|ask|ticket)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-08",
+      "category": "paraphrase",
+      "section": "IT Support and Passwords",
+      "question": "My computer problem has stopped me doing any work. How should I flag the ticket?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 3
+        }
+      ],
+      "criterion": "Mark it high priority and include a short description of the affected device or service.",
+      "required_patterns": [
+        "\\bhigh[ -]priority\\b",
+        "\\b(descri\\w*|detail\\w*)\\b",
+        "\\b(device|service|computer|system)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-09",
+      "category": "semantic",
+      "section": "IT Support and Passwords",
+      "question": "I cannot sign in. Is borrowing a teammate's login an acceptable workaround?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 3
+        }
+      ],
+      "criterion": "No. Never ask a coworker to share credentials.",
+      "required_patterns": [
+        "\\b(no|not|never|mustn.t|shouldn.t)\\b",
+        "\\b(credential\\w*|login|password\\w*)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-10",
+      "category": "direct",
+      "section": "Business Expenses",
+      "question": "Within how many days of a purchase should an expense report normally be submitted?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 4
+        }
+      ],
+      "criterion": "Normally within 30 days of purchase.",
+      "required_patterns": [
+        "\\b(30|thirty)\\b",
+        "\\bdays?\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-11",
+      "category": "paraphrase",
+      "section": "Business Expenses",
+      "question": "What details should I attach when I claim back a work purchase?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 4
+        }
+      ],
+      "criterion": "Business purpose, date, amount, and itemized receipt when available.",
+      "required_patterns": [
+        "\\bpurpose\\b",
+        "\\bdate\\b",
+        "\\bamount\\b",
+        "\\breceipt\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-12",
+      "category": "semantic",
+      "section": "Business Expenses",
+      "question": "I got a speeding ticket while travelling for work. Can the company pay me back?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 4
+        }
+      ],
+      "criterion": "No. Traffic fines are not reimbursable.",
+      "required_patterns": [
+        "\\b(no|not|never|non.reimbursable|ineligible|excluded)\\b",
+        "\\b(fine\\w*|speeding|traffic)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-13",
+      "category": "direct",
+      "section": "Employee Benefits",
+      "question": "What is the annual professional-development allowance?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 5
+        }
+      ],
+      "criterion": "Up to $1,000 annually for approved role/development-related learning.",
+      "required_patterns": [
+        "(1,?000|one thousand)",
+        "\\b(annual\\w*|year\\w*)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-14",
+      "category": "paraphrase",
+      "section": "Employee Benefits",
+      "question": "Can I save this year's unspent training budget for next year?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 5
+        }
+      ],
+      "criterion": "No. Unused professional-development funds do not carry over.",
+      "required_patterns": [
+        "\\b(no|not|never|cannot|can.t)\\b",
+        "\\b(carry|roll|next year|following year)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-15",
+      "category": "semantic",
+      "section": "Employee Benefits",
+      "question": "Who can explain which medical and dental coverage options I can choose?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 5
+        }
+      ],
+      "criterion": "Human Resources provides enrollment details and coverage options.",
+      "required_patterns": [
+        "\\b(human resources|HR)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-16",
+      "category": "direct",
+      "section": "Information Security",
+      "question": "Who should receive reports of suspicious emails and unexpected multi-factor authentication prompts?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 6
+        }
+      ],
+      "criterion": "Report them to the security team.",
+      "required_patterns": [
+        "\\bsecurity team\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-17",
+      "category": "paraphrase",
+      "section": "Information Security",
+      "question": "Is it okay to put confidential work files in my own online storage account?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 6
+        }
+      ],
+      "criterion": "No. Store confidential information only in approved company systems, not personal cloud accounts.",
+      "required_patterns": [
+        "\\b(no|not|never|mustn.t|shouldn.t)\\b",
+        "\\b(approved|company systems)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-18",
+      "category": "semantic",
+      "section": "Information Security",
+      "question": "My work laptop disappeared on the train. Should I wait until tomorrow to tell someone?",
+      "expected_status": "supported",
+      "expected_sources": [
+        {
+          "filename": "knowledgeops-retrieval-test.pdf",
+          "page_number": 6
+        }
+      ],
+      "criterion": "No. Lost or stolen company devices must be reported immediately.",
+      "required_patterns": [
+        "\\b(immediate\\w*|right away|without delay|as soon as possible)\\b",
+        "\\b(report\\w*|notify|tell|contact)\\b"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "id": "handbook-19",
+      "category": "unsupported",
+      "section": "Out of domain",
+      "question": "What is the capital of Japan?",
+      "expected_status": "insufficient_evidence",
+      "expected_sources": [],
+      "criterion": "Abstain: the handbook does not state this fact. Return insufficient_evidence with the canonical message and no citations."
+    },
+    {
+      "id": "handbook-20",
+      "category": "unsupported",
+      "section": "Out of domain",
+      "question": "Who won the 2022 FIFA World Cup?",
+      "expected_status": "insufficient_evidence",
+      "expected_sources": [],
+      "criterion": "Abstain: the handbook does not state this fact. Return insufficient_evidence with the canonical message and no citations."
+    },
+    {
+      "id": "handbook-21",
+      "category": "unsupported",
+      "section": "Out of domain",
+      "question": "What is the boiling point of pure water at sea level?",
+      "expected_status": "insufficient_evidence",
+      "expected_sources": [],
+      "criterion": "Abstain: the handbook does not state this fact. Return insufficient_evidence with the canonical message and no citations."
+    },
+    {
+      "id": "handbook-22",
+      "category": "unsupported",
+      "section": "Employee Benefits",
+      "question": "Exactly how many days is the health and dental benefits waiting period?",
+      "expected_status": "insufficient_evidence",
+      "expected_sources": [],
+      "criterion": "Abstain: the handbook does not state this fact. Return insufficient_evidence with the canonical message and no citations."
+    },
+    {
+      "id": "handbook-23",
+      "category": "unsupported",
+      "section": "Vacation and Leave",
+      "question": "How many paid vacation days do part-time employees receive?",
+      "expected_status": "insufficient_evidence",
+      "expected_sources": [],
+      "criterion": "Abstain: the handbook does not state this fact. Return insufficient_evidence with the canonical message and no citations."
+    },
+    {
+      "id": "handbook-24",
+      "category": "unsupported",
+      "section": "IT Support and Passwords",
+      "question": "What is the exact URL of the password reset portal?",
+      "expected_status": "insufficient_evidence",
+      "expected_sources": [],
+      "criterion": "Abstain: the handbook does not state this fact. Return insufficient_evidence with the canonical message and no citations."
+    },
+    {
+      "id": "handbook-25",
+      "category": "unsupported",
+      "section": "Remote Work",
+      "question": "Which specific weekdays must every team be in the office?",
+      "expected_status": "insufficient_evidence",
+      "expected_sources": [],
+      "criterion": "Abstain: the handbook does not state this fact. Return insufficient_evidence with the canonical message and no citations."
+    },
+    {
+      "id": "handbook-26",
+      "category": "unsupported",
+      "section": "Business Expenses",
+      "question": "What is the maximum dollar amount allowed for a hotel room per night?",
+      "expected_status": "insufficient_evidence",
+      "expected_sources": [],
+      "criterion": "Abstain: the handbook does not state this fact. Return insufficient_evidence with the canonical message and no citations."
+    }
+  ]
+}

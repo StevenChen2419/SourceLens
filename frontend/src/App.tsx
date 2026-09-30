@@ -1,7 +1,10 @@
 import { AnswerWorkspace } from './components/AnswerWorkspace';
 import { UploadPanel } from './components/UploadPanel';
+import { DocumentList } from './components/DocumentList';
+import { useState } from 'react';
 
 export default function App() {
+  const [documentsRevision, setDocumentsRevision] = useState(0);
   return <>
     <header className="header"><a className="brand" href="#main" aria-label="KnowledgeOps home"><span className="brand-mark" aria-hidden="true">K<span>↗</span></span>KnowledgeOps</a><span className="header-label">DOCUMENT WORKSPACE</span></header>
     <main id="main">
@@ -9,7 +12,7 @@ export default function App() {
         <h1>Answers you can<br /><span>trace to the source.</span></h1>
         <p>Ask questions grounded in your documents.<br />Less searching. More understanding.</p>
       </div>
-      <div className="layout"><UploadPanel /><AnswerWorkspace /></div>
+      <div className="layout"><div className="workspace"><UploadPanel onDocumentsChanged={() => setDocumentsRevision(value => value + 1)} /><DocumentList revision={documentsRevision} /></div><AnswerWorkspace /></div>
       <footer>KnowledgeOps <span>Built around your evidence. Verify important details in the source.</span></footer>
     </main>
   </>;

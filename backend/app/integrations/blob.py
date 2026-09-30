@@ -4,7 +4,7 @@ import logging
 from urllib.parse import quote
 from uuid import UUID
 
-from azure.core.exceptions import AzureError
+from azure.core.exceptions import AzureError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, ContentSettings
 
@@ -19,6 +19,30 @@ class BlobStore:
     def __init__(self, account_url: str | None, container: str) -> None:
         self.account_url = account_url
         self.container = container
+
+    def read_pdf(self, document_id: UUID) -> bytes | None:
+        if not self.account_url:
+            raise BlobUploadError("Document storage is not configured.")
+        try:
+            with DefaultAzureCredential() as credential, BlobServiceClient(self.account_url, credential=credential) as client:
+                try:
+                    return client.get_blob_client(self.container, f"{document_id}.pdf").download_blob().readall()
+                except ResourceNotFoundError:
+                    return None
+        except AzureError as exc:
+            raise BlobUploadError("Original PDF could not be read.") from exc
+
+    def delete_pdf(self, document_id: UUID) -> None:
+        if not self.account_url:
+            raise BlobUploadError("Document storage is not configured.")
+        try:
+            with DefaultAzureCredential() as credential, BlobServiceClient(self.account_url, credential=credential) as client:
+                try:
+                    client.get_blob_client(self.container, f"{document_id}.pdf").delete_blob()
+                except ResourceNotFoundError:
+                    pass  # Retrying a completed deletion is safe.
+        except AzureError as exc:
+            raise BlobUploadError("Original PDF deletion failed; retry document deletion.") from exc
 
     def upload_pdf(self, *, document_id: UUID, filename: str, data: bytes) -> None:
         if not self.account_url:

@@ -27,6 +27,25 @@ class DocumentUploadResponse(BaseModel):
     chunk_count: int = Field(ge=1)
 
 
+class DocumentSummary(BaseModel):
+    document_id: UUID
+    filename: str
+    page_count: int | None = Field(ge=1)
+    chunk_count: int = Field(ge=1)
+    state: Literal["indexing", "indexed", "failed", "deleting"]
+    original_retained_on_delete: bool
+
+
+class DocumentListResponse(BaseModel):
+    documents: list[DocumentSummary]
+
+
+class DocumentDeleteResponse(BaseModel):
+    document_id: UUID
+    status: Literal["deleted"] = "deleted"
+    original_retained: bool
+
+
 class EmbeddedChunk(BaseModel):
     chunk: DocumentChunk
     vector: list[float]

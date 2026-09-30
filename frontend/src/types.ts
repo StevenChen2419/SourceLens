@@ -5,6 +5,19 @@ export interface DocumentUploadResponse {
   chunk_count: number;
 }
 
+export interface DocumentSummary extends Omit<DocumentUploadResponse, 'page_count'> {
+  page_count: number | null;
+  state: 'indexing' | 'indexed' | 'failed' | 'deleting';
+  original_retained_on_delete: boolean;
+}
+
+export interface DocumentListResponse { documents: DocumentSummary[] }
+export interface DocumentDeleteResponse {
+  document_id: string;
+  status: 'deleted';
+  original_retained: boolean;
+}
+
 export interface Citation {
   source_id: string;
   document_id: string;

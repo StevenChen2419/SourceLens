@@ -37,3 +37,11 @@ def test_validation_errors_are_readable_by_local_frontend() -> None:
         )
     assert response.status_code == 422
     assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
+
+
+@pytest.mark.parametrize("method", ["GET", "DELETE"])
+def test_document_lifecycle_methods_are_allowed_only_from_local_frontend(method):
+    with TestClient(app) as client:
+        for origin, expected in [("http://127.0.0.1:5173", 200), ("https://other.example", 400)]:
+            response = client.options("/api/documents", headers={"Origin": origin, "Access-Control-Request-Method": method})
+            assert response.status_code == expected

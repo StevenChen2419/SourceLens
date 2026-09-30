@@ -604,3 +604,24 @@ footer>span {
     letter-spacing:-1.5px;
   }
 }
+
+.document-list ul {
+  list-style: none;
+  padding: 0;
+}
+.document-list li {
+  border-top: 1px solid #dfe4da;
+  padding: 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: start;
+}
+.document-list li > div { min-width: 0; flex: 1 1 160px; }
+.document-list > p { margin-top: 12px; }
+.secondary { background: #edf1e8; color: #233a34; }
+.danger { background: #fff0e9; color: #873c27; }
+.delete-confirm { border: 1px solid #eac6b4; padding: 16px; border-radius: 8px; }
+.delete-confirm h3 { overflow-wrap: anywhere; }
+.delete-confirm p { margin-top: 10px; }
+.confirm-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }

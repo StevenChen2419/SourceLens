@@ -7,6 +7,7 @@ from fastapi import Depends
 from app.config import Settings
 from app.integrations.blob import BlobStore
 from app.integrations.search import SearchStore
+from app.integrations.catalog import CatalogStore
 
 
 def get_settings() -> Settings:
@@ -20,3 +21,7 @@ def get_blob_store(settings: Annotated[Settings, Depends(get_settings)]) -> Blob
 
 def get_search_store(settings: Annotated[Settings, Depends(get_settings)]) -> SearchStore:
     return SearchStore(settings)
+
+
+def get_catalog_store(settings: Annotated[Settings, Depends(get_settings)]) -> CatalogStore:
+    return CatalogStore(settings)

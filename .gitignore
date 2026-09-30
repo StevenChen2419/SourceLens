@@ -31,3 +31,8 @@ Thumbs.db
 # Local tooling caches
 .uv-cache/
 .python-runtime/
+node_modules/
+coverage/
+*.tsbuildinfo
+.npm-cache/
+backend/evaluation/results/

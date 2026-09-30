@@ -1,8 +1,8 @@
-import type { AnswerResponse, DocumentUploadResponse } from './types';
+import type { AnswerResponse, DocumentUploadResponse, DocumentListResponse, DocumentDeleteResponse } from './types';
 
 const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 
-async function request<T>(path: string, options: RequestInit, kind: 'upload' | 'answer'): Promise<T> {
+async function request<T>(path: string, options: RequestInit, kind: 'upload' | 'answer' | 'list' | 'delete'): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${baseUrl}${path}`, options);
@@ -10,6 +10,21 @@ async function request<T>(path: string, options: RequestInit, kind: 'upload' | '
     throw new Error('Unable to reach KnowledgeOps. Check your connection and that the backend is running.');
   }
   if (!response.ok) {
+    if (response.status === 409) {
+      if (kind === 'upload') {
+        const body = await response.json().catch(() => null);
+        if (body?.detail?.code === 'duplicate_document') {
+          throw new Error(body.detail.state === 'indexed'
+            ? 'This exact PDF is already indexed. No duplicate was added, even if the filename changed.'
+            : 'This PDF already has an incomplete document operation. Refresh the list and delete the incomplete document before uploading again.');
+        }
+      }
+      throw new Error('Another document operation is in progress. Please retry later.');
+    }
+    if (kind === 'list') throw new Error('Unable to load documents. Check the backend and Azure storage, then refresh.');
+    if (kind === 'delete') throw new Error(response.status === 404
+      ? 'This document was not found. Refresh the document list.'
+      : 'Deletion is incomplete. Some data may remain. Refresh the list and retry deletion.');
     if (kind === 'upload') {
       if (response.status === 413) throw new Error('This PDF exceeds the upload size limit. Try a smaller file.');
       if (response.status === 415) throw new Error('Choose a valid PDF file. Other file types are not supported.');
@@ -24,6 +39,14 @@ async function request<T>(path: string, options: RequestInit, kind: 'upload' | '
   } catch {
     throw new Error('The backend returned an unreadable response. Please try again.');
   }
+}
+
+export function listDocuments(): Promise<DocumentListResponse> {
+  return request('/api/documents', { method: 'GET' }, 'list');
+}
+
+export function deleteDocument(documentId: string): Promise<DocumentDeleteResponse> {
+  return request(`/api/documents/${encodeURIComponent(documentId)}`, { method: 'DELETE' }, 'delete');
 }
 
 export function uploadDocument(file: File): Promise<DocumentUploadResponse> {

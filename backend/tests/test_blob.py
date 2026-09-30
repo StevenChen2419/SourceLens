@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError, ServiceRequestError
+from azure.core.exceptions import ResourceNotFoundError
 
 from app.integrations.blob import BlobStore, BlobUploadError
 
@@ -58,3 +59,27 @@ def test_missing_configuration_does_not_create_credentials() -> None:
                 document_id=uuid4(), filename="f.pdf", data=b"data"
             )
         credential.assert_not_called()
+
+
+def test_read_and_delete_use_uuid_blob_only_and_missing_blob_is_idempotent():
+    identifier = uuid4()
+    with patch("app.integrations.blob.DefaultAzureCredential"), patch("app.integrations.blob.BlobServiceClient") as factory:
+        client = factory.return_value.__enter__.return_value
+        blob = client.get_blob_client.return_value
+        store = BlobStore("https://example.blob.core.windows.net", "documents")
+        blob.download_blob.return_value.readall.return_value = b"pdf"
+        assert store.read_pdf(identifier) == b"pdf"
+        store.delete_pdf(identifier)
+        client.get_blob_client.assert_called_with("documents", f"{identifier}.pdf")
+        blob.delete_blob.assert_called_once_with()
+        blob.download_blob.side_effect = ResourceNotFoundError()
+        blob.delete_blob.side_effect = ResourceNotFoundError()
+        assert store.read_pdf(identifier) is None
+        store.delete_pdf(identifier)
+
+
+def test_original_deletion_failure_is_not_hidden():
+    with patch("app.integrations.blob.DefaultAzureCredential"), patch("app.integrations.blob.BlobServiceClient") as factory:
+        factory.return_value.__enter__.return_value.get_blob_client.return_value.delete_blob.side_effect = HttpResponseError("private")
+        with pytest.raises(BlobUploadError, match="deletion failed"):
+            BlobStore("https://example.blob.core.windows.net", "documents").delete_pdf(uuid4())

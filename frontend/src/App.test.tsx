@@ -14,9 +14,14 @@ const supported = {
 function response(body: unknown, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => body } as Response;
 }
+function installFetch(writes: (url: string, options: RequestInit) => unknown) {
+  // List flows have their own tests; these assertions inspect upload/answer requests.
+  vi.stubGlobal('fetch', (url: string, options: RequestInit) => options.method === 'GET'
+    ? Promise.resolve(response({ documents: [] })) : writes(url, options));
+}
 function mockResponse(body: unknown, status = 200) {
   const fetch = vi.fn().mockResolvedValue(response(body, status));
-  vi.stubGlobal('fetch', fetch);
+  installFetch(fetch);
   return fetch;
 }
 async function ask() {
@@ -34,7 +39,7 @@ describe('document upload', () => {
   it('sends one multipart PDF and waits for indexing before showing success', async () => {
     let complete!: (value: Response) => void;
     const fetch = vi.fn().mockReturnValue(new Promise<Response>(resolve => { complete = resolve; }));
-    vi.stubGlobal('fetch', fetch);
+    installFetch(fetch);
     render(<App />);
     const file = await selectPdf();
     await userEvent.setup().click(screen.getByRole('button', { name: /Upload document/ }));
@@ -94,7 +99,7 @@ describe('grounded answers', () => {
     await ask();
     expect(await screen.findByText(supported.answer)).toBeInTheDocument();
     expect(screen.getByText('Based on your documents')).toBeInTheDocument();
-    const sources = screen.getByRole('list');
+    const sources = screen.getByText('Sources').parentElement!;
     expect(within(sources).getAllByRole('listitem')).toHaveLength(2);
     expect(sources).toHaveTextContent('handbook.pdf · Page 1');
     expect(sources).toHaveTextContent('handbook.pdf · Page 2');
@@ -110,13 +115,13 @@ describe('grounded answers', () => {
     expect(await screen.findByText('Not enough evidence')).toBeInTheDocument();
     expect(screen.getByText('The supplied documents do not answer this question.')).toBeInTheDocument();
     expect(screen.queryByText('Sources')).not.toBeInTheDocument();
-    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.queryByText('handbook.pdf')).not.toBeInTheDocument();
   });
 
   it('disables empty questions and duplicate submissions while waiting', async () => {
     let complete!: (value: Response) => void;
     const fetch = vi.fn().mockReturnValue(new Promise<Response>(resolve => { complete = resolve; }));
-    vi.stubGlobal('fetch', fetch);
+    installFetch(fetch);
     render(<App />);
     expect(screen.getByRole('button', { name: /Ask question/ })).toBeDisabled();
     await ask();
@@ -138,7 +143,7 @@ describe('grounded answers', () => {
   });
 
   it('explains network/backend unavailability', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    installFetch(vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     render(<App />);
     await ask();
     expect(await screen.findByRole('alert')).toHaveTextContent(/backend is running/);

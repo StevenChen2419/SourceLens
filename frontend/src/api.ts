@@ -8,7 +8,7 @@ async function request<T>(path: string, options: RequestInit, kind: 'upload' | '
   try {
     response = await fetch(`${baseUrl}${path}`, options);
   } catch {
-    throw new Error('Unable to reach KnowledgeOps. Check your connection and that the backend is running.');
+    throw new Error('Unable to reach SourceLens. Check your connection and that the backend is running.');
   }
   if (!response.ok) {
     if (response.status === 409) {

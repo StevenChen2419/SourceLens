@@ -3,9 +3,9 @@ requires = ["setuptools>=75,<83"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "knowledgeops-backend"
+name = "sourcelens-backend"
 version = "0.1.0"
-description = "FastAPI backend for KnowledgeOps"
+description = "FastAPI backend for SourceLens"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.115,<1.0",

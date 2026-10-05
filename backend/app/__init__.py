@@ -1,1 +1,1 @@
-"""KnowledgeOps backend application."""
+"""SourceLens backend application."""

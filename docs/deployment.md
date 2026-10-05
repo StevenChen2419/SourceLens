@@ -1,6 +1,8 @@
-# Manual deployment readiness
+# SourceLens manual deployment readiness
 
 This runbook is not an automated provisioner. Commands in the Azure section **create/change resources and role assignments** only when you choose to execute them. No GitHub CD is implemented. Use PowerShell from the repository root. Stop on any nonzero native-command exit code; do not continue with missing IDs or a failed build.
+
+SourceLens was formerly KnowledgeOps. Legacy `KNOWLEDGEOPS_*` settings and existing Search/index names are intentional compatibility identifiers. New image/hosting examples use `sourcelens`; if hosting already exists, use its existing names rather than creating replacement resources solely for branding. Rebuild images to use the new package name.
 
 ## Architecture and limits
 
@@ -49,11 +51,11 @@ Push-Location frontend
 npm ci
 npm test
 npx --no-install tsc --noEmit
-$env:VITE_API_BASE_URL = 'https://knowledgeops-api.example.com'
+$env:VITE_API_BASE_URL = 'https://sourcelens-api.example.com'
 npm run build
 Pop-Location
-docker build --platform linux/amd64 -t knowledgeops-backend:readiness backend
-.\backend\.venv\Scripts\python.exe backend/scripts/verify_container.py knowledgeops-backend:readiness
+docker build --platform linux/amd64 -t sourcelens-backend:readiness backend
+.\backend\.venv\Scripts\python.exe backend/scripts/verify_container.py sourcelens-backend:readiness
 ```
 
 The verifier runs an ephemeral non-root container with 0.5 CPU/1 GiB, **no network**, no volumes and no host ports. It scans the filesystem for dotenv/PDF/evaluation artifacts and common credential files/private keys, loads `cl100k_base` and `o200k_base` from the baked cache, then starts Uvicorn with syntactically valid example endpoints and verifies `GET /health` returns `200 {"status":"ok"}`. It verifies the image's configured user and command, and removes its container on completion. It never calls Azure. Public CA certificate bundles are legitimate dependencies, not credentials. This filesystem scan plus the context allowlist is not a general-purpose secret scanner for arbitrary future source-code edits.
@@ -66,7 +68,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
 
 `/health` performs no Azure calls. The Docker HEALTHCHECK is useful locally; Container Apps uses the explicit Startup/Readiness/Liveness probes in `containerapp.example.json`, not Docker's HEALTHCHECK. Startup allows about 150 seconds, readiness checks every 10 seconds and liveness every 30 seconds. Internal probes use HTTP to port 8000; public ingress uses HTTPS. A healthy process does not prove inference or storage access. Avoid external always-on pings that defeat scale-to-zero.
 
-## Manual Azure deployment — not executed by this milestone
+## Manual Azure deployment (not executed by this milestone)
 
 First confirm your remaining credit, existing service regions/SKUs, network rules, and a supported Container Apps region. An identity role does not bypass service firewalls. Do not change existing service network rules or create networking infrastructure automatically. Budget alerts are notifications, not a spending cap. The hosted app shares `knowledgeops-chunks` and its catalog with local development: any successful write affects that shared collection.
 
@@ -75,9 +77,9 @@ First confirm your remaining credit, existing service regions/SKUs, network rule
 Set `<owner>` and a unique tag. Use `docker login ghcr.io -u <owner>` interactively; enter a GitHub token with package-publishing permission at the password prompt, never in shell history or a file. This is a registry publishing credential, not an Azure application key. Use Docker's credential store and log out afterward.
 
 ```powershell
-$imageTag = 'ghcr.io/<owner>/knowledgeops-backend:readiness-v1'
+$imageTag = 'ghcr.io/<owner>/sourcelens-backend:readiness-v1'
 docker login ghcr.io -u <owner>
-docker tag knowledgeops-backend:readiness $imageTag
+docker tag sourcelens-backend:readiness $imageTag
 docker push $imageTag
 docker logout ghcr.io
 docker image inspect $imageTag --format '{{json .RepoDigests}}'
@@ -95,11 +97,11 @@ az account set --subscription '<subscription-id>'
 az extension add --name containerapp --upgrade
 az provider register --namespace Microsoft.App --wait
 az provider register --namespace Microsoft.Web --wait
-$hostingGroup = 'knowledgeops-hosting'
+$hostingGroup = 'sourcelens-hosting'
 $region = '<supported-container-apps-region>'
 $staticRegion = '<supported-static-web-apps-region>'
-$environmentName = 'knowledgeops-env'
-$backendName = 'knowledgeops-api'
+$environmentName = 'sourcelens-env'
+$backendName = 'sourcelens-api'
 $frontendName = '<globally-unique-static-app-name>'
 az group create --name $hostingGroup --location $region
 az containerapp env create --name $environmentName --resource-group $hostingGroup --location $region --enable-workload-profiles --logs-destination none

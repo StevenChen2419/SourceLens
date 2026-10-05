@@ -1,10 +1,12 @@
-# KnowledgeOps repository instructions
+# SourceLens repository instructions
 
 These instructions apply to all work in this repository.
 
 ## Project goal
 
-KnowledgeOps is a portfolio-quality enterprise AI knowledge and support platform intended to demonstrate new-grad software engineering and applied AI engineering skills. Keep it understandable, testable, maintainable, and suitable for the developer to confidently explain in a technical interview.
+SourceLens is a portfolio-quality enterprise AI knowledge and support platform intended to demonstrate new-grad software engineering and applied AI engineering skills. Keep it understandable, testable, maintainable, and suitable for the developer to confidently explain in a technical interview.
+
+Branding is SourceLens (formerly KnowledgeOps). Preserve legacy `KNOWLEDGEOPS_*` configuration names, existing Azure resource/index names, and evaluation fixtures unless a migration is explicitly requested.
 
 ## Architecture
 

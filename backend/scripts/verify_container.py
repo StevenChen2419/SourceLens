@@ -54,7 +54,7 @@ finally:
 
 
 def main() -> None:
-    image = sys.argv[1] if len(sys.argv) > 1 else 'knowledgeops-backend:readiness'
+    image = sys.argv[1] if len(sys.argv) > 1 else 'sourcelens-backend:readiness'
     config = json.loads(subprocess.check_output(['docker', 'image', 'inspect', image]))[0]['Config']
     assert config['User'] == '10001:10001'
     assert config['Cmd'] == ['python', '-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--workers', '1']

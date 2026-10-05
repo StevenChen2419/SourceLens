@@ -16,7 +16,7 @@ class Settings(BaseSettings):
         env_prefix="KNOWLEDGEOPS_",
     )
 
-    app_name: str = Field(default="KnowledgeOps", min_length=1)
+    app_name: str = Field(default="SourceLens", min_length=1)
     environment: Literal["development", "production"] = "development"
     cors_origins: list[str] = Field(default_factory=lambda: [
         "http://localhost:5173", "http://127.0.0.1:5173",

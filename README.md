@@ -1,23 +1,25 @@
-# KnowledgeOps
+# SourceLens
 
 Production readiness is implemented for Static Web Apps Free and Container Apps Consumption. **No Azure deployment or CD is configured.** See [the manual deployment runbook](docs/deployment.md) for local image checks, managed identity/RBAC, exact CORS, probes, IP restrictions, and the commands to deploy manually. Existing evaluation artifacts and RAG behavior are unchanged.
 
-KnowledgeOps is a portfolio enterprise AI knowledge and support platform, built to demonstrate understandable, testable software engineering and applied AI engineering.
+SourceLens is an Azure-powered RAG document intelligence platform with hybrid retrieval, grounded generation, validated citations, evaluation, and document lifecycle management. Built as a portfolio project, it demonstrates understandable, testable software engineering and applied AI engineering.
 
 The current implementation connects PDF ingestion, Azure AI Search hybrid retrieval, and grounded GPT-5-mini answers with citations. A React + TypeScript frontend provides a PDF upload panel and a question workspace. The backend provides `POST /api/answers`, independent retrieval debugging through `POST /api/retrieval`, `GET /health`, typed configuration, and tests. Semantic ranking, agents, conversation memory, and user accounts are not implemented yet.
+
+Previously named KnowledgeOps. Existing `KNOWLEDGEOPS_*` environment variables, `knowledgeops-chunks` and evaluation index names, and handbook filenames remain unchanged for compatibility. The repository folder and Git remote are not renamed by this branding update.
 
 ## Run the complete local application
 
 Complete the backend setup and Azure configuration below first. Install Node.js 22.12+ (or 24 LTS) with npm. From the repository root, use two PowerShell terminals:
 
-Terminal 1 — backend:
+Terminal 1 (backend):
 
 ```powershell
 cd backend
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-Terminal 2 — frontend (first-time setup and startup):
+Terminal 2 (frontend, first-time setup and startup):
 
 ```powershell
 cd frontend
@@ -28,7 +30,7 @@ npm run dev
 
 On subsequent runs, only `npm run dev` is needed in the frontend terminal. Use `npm ci` for a clean install from the committed lockfile. On macOS/Linux, use `cp .env.example .env` and the backend Python path shown below.
 
-Open [KnowledgeOps](http://127.0.0.1:5173). Select or drop one text-based PDF and click **Upload document**. The UI shows an indeterminate loading state during upload and processing; **Document indexed** appears only after the backend confirms success. Its page and chunk counts come from the backend. Then ask a question and inspect the answer's filename/page citations. These references identify pages in your original PDF; they are not public download links. Unsupported questions display the backend's insufficient-evidence response without sources.
+Open [SourceLens](http://127.0.0.1:5173). Select or drop one text-based PDF and click **Upload document**. The UI shows an indeterminate loading state during upload and processing; **Document indexed** appears only after the backend confirms success. Its page and chunk counts come from the backend. Then ask a question and inspect the answer's filename/page citations. These references identify pages in your original PDF; they are not public download links. Unsupported questions display the backend's insufficient-evidence response without sources.
 
 Previously indexed documents remain available to questions. **Your documents** lists the backend's document catalog, refreshes after upload attempts, and provides confirmed deletion. The upload receipt and current answer are temporary browser state; deleting a document does not rewrite an answer already displayed. Upload failures can leave stored data behind; incomplete records remain visible for cleanup.
 
@@ -42,7 +44,7 @@ From `frontend/`:
 
 ```powershell
 npm test
-$env:VITE_API_BASE_URL = 'https://knowledgeops-api.example.com' # Build-only placeholder; use real HTTPS origin for deployment.
+$env:VITE_API_BASE_URL = 'https://sourcelens-api.example.com' # Build-only placeholder; use real HTTPS origin for deployment.
 npm run build
 ```
 
@@ -340,7 +342,7 @@ Pydantic settings load values from `backend/.env`; process environment variables
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `KNOWLEDGEOPS_APP_NAME` | `KnowledgeOps` | Nonempty application title shown in API documentation |
+| `KNOWLEDGEOPS_APP_NAME` | `SourceLens` | Nonempty application title shown in API documentation |
 | `AZURE_STORAGE_ACCOUNT_URL` | unset | Required for uploads: HTTPS Blob service URL without a container path, query string, or credentials |
 | `AZURE_STORAGE_CONTAINER` | `documents` | Existing private container; the application does not create it |
 | `MAX_UPLOAD_SIZE_MB` | `10` | Positive integer file size limit, measured as MiB (1,048,576 bytes) |
@@ -672,9 +674,9 @@ In a second terminal, from `backend/`:
 
 The script sends these exact questions to the running local API, using real Azure services:
 
-1. `How many vacation days do full-time employees receive?` — expect a supported answer and PDF/page citations.
-2. `How many days each week am I allowed to do my job from home?` — expect a supported answer and PDF/page citations.
-3. `What is the capital of Japan?` — expect the fixed insufficient-evidence response and no citations, assuming your uploaded policy PDF does not contain this fact.
+1. `How many vacation days do full-time employees receive?`: expect a supported answer and PDF/page citations.
+2. `How many days each week am I allowed to do my job from home?`: expect a supported answer and PDF/page citations.
+3. `What is the capital of Japan?`: expect the fixed insufficient-evidence response and no citations, assuming your uploaded policy PDF does not contain this fact.
 
 It prints each full response and exits with code 1 if the expected status/citation behavior fails. It does not know your PDF's correct vacation or remote-work numbers: manually compare both answers and cited pages with the source PDF. If a check fails, use `/api/retrieval` to inspect the supplied evidence. There are no automatic document writes. Calls incur embedding/Search/generation usage. Alternatively, test **POST /api/answers** in `/docs` with `{"question": "How many vacation days do full-time employees receive?"}`.
 

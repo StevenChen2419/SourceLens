@@ -13,7 +13,7 @@ from app.services.embeddings import embed_chunks
 def main() -> int:
     chunk = DocumentChunk(
         document_id="smoke-test", filename="smoke-test.txt", page_number=1,
-        chunk_id="smoke-test-0", chunk_index=0, text="KnowledgeOps helps people find document information.",
+        chunk_id="smoke-test-0", chunk_index=0, text="SourceLens helps people find document information.",
     )
     try:
         result = embed_chunks([chunk], Settings())[0]

@@ -18,7 +18,7 @@ def main() -> int:
         store = SearchStore(settings)
         store.ensure_index()
         chunk = DocumentChunk(document_id=key, filename="search-smoke-test.txt", page_number=1,
-                              chunk_index=0, chunk_id=key, text="KnowledgeOps Search indexing smoke test.")
+                              chunk_index=0, chunk_id=key, text="SourceLens Search indexing smoke test.")
         # Synthetic nonzero vector tests indexing only, without a second Azure service.
         vector = [1.0] + [0.0] * (store.dimensions - 1)
         item = EmbeddedChunk(chunk=chunk, vector=vector, dimensions=store.dimensions,

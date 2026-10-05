@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { deleteDocument, listDocuments } from '../api';
 import type { DocumentSummary } from '../types';
 
-const stateLabels = { indexed: 'Indexed', indexing: 'Indexing — may be incomplete', failed: 'Ingestion incomplete', deleting: 'Deletion incomplete' };
+const stateLabels = { indexed: 'Indexed', indexing: 'Indexing (may be incomplete)', failed: 'Ingestion incomplete', deleting: 'Deletion incomplete' };
 
 export function DocumentList({ revision }: { revision: number }) {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);

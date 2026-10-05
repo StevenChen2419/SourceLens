@@ -1,0 +1,162 @@
+{
+  "description": "Summary and selected recorded examples extracted from preserved live Azure evaluation artifacts. No metrics were recalculated or changed. Raw artifacts remain local and ignored by Git.",
+  "runs": [
+    {
+      "name": "Baseline v1",
+      "artifact_filename": "20260929T195615009500Z-answers.json",
+      "artifact_sha256": "667d2aef7abd8aa1e699e96eb7de75a8ecd712373e4b41b7806eea11a5bf51aa",
+      "started_at": "2026-09-29T19:56:15.009500+00:00",
+      "dataset_version": "1.0",
+      "dataset_sha256": "f6f1c92276ababfb019d86a7101fd932c018700bff7aacf40ab2ee0b26fc930f",
+      "summary": {
+        "cases": 26,
+        "errors": 0,
+        "metrics": {
+          "hit_at_1": {
+            "value": 0.8333333333333334,
+            "denominator": 18
+          },
+          "hit_at_3": {
+            "value": 0.8888888888888888,
+            "denominator": 18
+          },
+          "expected_page_recall": {
+            "value": 0.9444444444444444,
+            "denominator": 18
+          },
+          "all_expected_pages_retrieved": {
+            "value": 0.9444444444444444,
+            "denominator": 18
+          },
+          "all_expected_pages_supplied": {
+            "value": 0.9444444444444444,
+            "denominator": 18
+          },
+          "classification_correct": {
+            "value": 0.9615384615384616,
+            "denominator": 26
+          },
+          "citation_precision": {
+            "value": 0.8333333333333334,
+            "denominator": 18
+          },
+          "citation_page_recall": {
+            "value": 0.9444444444444444,
+            "denominator": 18
+          },
+          "citation_provenance_correct": {
+            "value": 0.9615384615384616,
+            "denominator": 26
+          },
+          "citations_correct": {
+            "value": 0.8076923076923077,
+            "denominator": 26
+          },
+          "answer_check_passed": {
+            "value": 0.9615384615384616,
+            "denominator": 26
+          },
+          "answer_check_given_expected_evidence": {
+            "value": 1.0,
+            "denominator": 17
+          }
+        }
+      }
+    },
+    {
+      "name": "Controlled Corpus v1",
+      "artifact_filename": "controlled-corpus-v1-answers.json",
+      "artifact_sha256": "0813dec4b56eba76c14897f4ede031649319ac3e561c7ca429c88dbf88dc1de2",
+      "started_at": "2026-09-29T20:18:32.965944+00:00",
+      "dataset_version": "1.0",
+      "dataset_sha256": "f6f1c92276ababfb019d86a7101fd932c018700bff7aacf40ab2ee0b26fc930f",
+      "summary": {
+        "cases": 26,
+        "errors": 0,
+        "metrics": {
+          "hit_at_1": {
+            "value": 0.8333333333333334,
+            "denominator": 18
+          },
+          "hit_at_3": {
+            "value": 0.9444444444444444,
+            "denominator": 18
+          },
+          "expected_page_recall": {
+            "value": 1.0,
+            "denominator": 18
+          },
+          "all_expected_pages_retrieved": {
+            "value": 1.0,
+            "denominator": 18
+          },
+          "all_expected_pages_supplied": {
+            "value": 1.0,
+            "denominator": 18
+          },
+          "classification_correct": {
+            "value": 1.0,
+            "denominator": 26
+          },
+          "citation_precision": {
+            "value": 1.0,
+            "denominator": 18
+          },
+          "citation_page_recall": {
+            "value": 1.0,
+            "denominator": 18
+          },
+          "citation_provenance_correct": {
+            "value": 1.0,
+            "denominator": 26
+          },
+          "citations_correct": {
+            "value": 1.0,
+            "denominator": 26
+          },
+          "answer_check_passed": {
+            "value": 1.0,
+            "denominator": 26
+          },
+          "answer_check_given_expected_evidence": {
+            "value": 1.0,
+            "denominator": 18
+          }
+        }
+      },
+      "recorded_examples": [
+        {
+          "case_id": "handbook-01",
+          "question": "How many vacation days do full-time employees receive per calendar year?",
+          "answer": "Full-time employees receive 15 days of paid vacation per calendar year.",
+          "status": "supported",
+          "citations": [
+            {
+              "filename": "knowledgeops-retrieval-test.pdf",
+              "page_number": 1
+            }
+          ]
+        },
+        {
+          "case_id": "handbook-04",
+          "question": "How many days per week may employees work remotely, and whose approval is required?",
+          "answer": "Employees may work remotely for up to three days per week, with manager approval required.",
+          "status": "supported",
+          "citations": [
+            {
+              "filename": "knowledgeops-retrieval-test.pdf",
+              "page_number": 2
+            }
+          ]
+        },
+        {
+          "case_id": "handbook-19",
+          "question": "What is the capital of Japan?",
+          "answer": "The retrieved documents do not contain enough evidence to answer this question.",
+          "status": "insufficient_evidence",
+          "citations": []
+        }
+      ]
+    }
+  ]
+}

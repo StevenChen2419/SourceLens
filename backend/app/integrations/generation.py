@@ -56,7 +56,8 @@ class AzureAnswerGenerator:
             with DefaultAzureCredential() as credential:
                 provider = get_bearer_token_provider(credential, "https://ai.azure.com/.default")
                 with OpenAI(base_url=self.settings.azure_generation_endpoint, api_key=provider,
-                            timeout=60.0, max_retries=2) as client:
+                            timeout=(self.settings.demo_azure_timeout_seconds if self.settings.app_mode == "public_demo" else 60.0),
+                            max_retries=(self.settings.demo_azure_max_retries if self.settings.app_mode == "public_demo" else 2)) as client:
                     response = client.chat.completions.create(
                         model=self.settings.azure_generation_deployment,
                         messages=[
@@ -64,7 +65,8 @@ class AzureAnswerGenerator:
                             {"role": "user", "content": json.dumps({"question": question, "passages": passages}, ensure_ascii=False)},
                         ],
                         reasoning_effort="low",
-                        max_completion_tokens=self.settings.generation_max_completion_tokens,
+                        max_completion_tokens=(self.settings.demo_max_completion_tokens if self.settings.app_mode == "public_demo"
+                                               else self.settings.generation_max_completion_tokens),
                         response_format={"type": "json_schema", "json_schema": {
                             "name": "grounded_answer", "strict": True, "schema": ModelAnswer.model_json_schema(),
                         }},

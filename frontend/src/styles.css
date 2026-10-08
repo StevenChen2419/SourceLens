@@ -625,3 +625,6 @@ footer>span {
 .delete-confirm h3 { overflow-wrap: anywhere; }
 .delete-confirm p { margin-top: 10px; }
 .confirm-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+.suggested-questions { display: grid; gap: .5rem; margin: 1rem 0; }
+.suggested-questions .button { text-align: left; justify-content: flex-start; font-size: .85rem; }

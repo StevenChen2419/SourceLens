@@ -33,6 +33,8 @@ class AzureEmbeddings:
         self.endpoint = settings.azure_embedding_endpoint
         self.deployment = settings.azure_embedding_deployment
         self.dimensions = settings.embedding_dimensions
+        self.timeout = settings.demo_azure_timeout_seconds if settings.app_mode == "public_demo" else 30.0
+        self.max_retries = settings.demo_azure_max_retries if settings.app_mode == "public_demo" else 2
 
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
         """Embed one already validated batch. Never log inputs or SDK error bodies."""
@@ -43,7 +45,7 @@ class AzureEmbeddings:
                 token_provider = get_bearer_token_provider(credential, "https://ai.azure.com/.default")
                 with OpenAI(
                     base_url=self.endpoint, api_key=token_provider,
-                    timeout=30.0, max_retries=2,
+                    timeout=self.timeout, max_retries=self.max_retries,
                 ) as client:
                     response = client.embeddings.create(
                         model=self.deployment, input=list(texts),

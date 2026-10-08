@@ -6,7 +6,7 @@ Finding a policy in a collection of PDFs takes time. A generated answer is only 
 
 Built with **Python 3.12, FastAPI, React, TypeScript, Azure AI Search, Azure Blob Storage, and Microsoft Foundry**.
 
-**Status:** Local end-to-end flows have been verified against live Azure services. Docker packaging and offline container verification are complete. Frontend/backend hosting has **not been deployed**, and there is no public hosted demo or CD pipeline.
+**Status:** Local end-to-end flows have been verified against live Azure services. Public-demo restrictions and offline Docker container verification are complete. Frontend/backend hosting has **not been deployed**, and there is no public hosted demo or CD pipeline.
 
 [Demo](#demo) · [Features](#technical-features) · [Architecture](#architecture) · [Evaluation](#measured-evaluation-results) · [Run locally](#run-locally) · [Documentation](#technical-documentation)
 
@@ -105,12 +105,12 @@ Requires Python 3.12 and Node.js 22.12+ (or 24 LTS). The full application also r
 2. Start FastAPI and Vite using the [two-terminal instructions](docs/development.md#run-the-complete-local-application).
 3. Open `http://127.0.0.1:5173`. Use `/docs` on the backend to inspect API contracts, including the retrieval debugging endpoint.
 
-Latest local verification: **302 backend tests and 33 frontend tests passed**, along with TypeScript checks and a production frontend build using a test HTTPS API URL. [Test commands](docs/development.md#run-tests) · [Container verification](docs/deployment.md#reproducible-packaging-and-local-checks)
+Latest local verification: **366 backend tests and 42 frontend tests passed**, along with TypeScript checks and a production frontend build using a test HTTPS API URL. [Test commands](docs/development.md#run-tests) · [Container verification](docs/deployment.md#reproducible-packaging-and-local-checks)
 
 ## Scope and security
 
 - Current scope: text-based PDFs, a shared document collection, and single-turn questions. OCR, user accounts, conversation memory, agents, semantic ranking and production deployment are not implemented.
-- The API has no user authorization. Do not expose upload/deletion/model endpoints unrestricted. The deployment plan requires an initial backend IP allowlist; CORS is not authentication.
+- Public demo mode allows bounded anonymous questions over one approved synthetic handbook; upload, deletion and diagnostic routes are blocked server-side. Full document management remains trusted development only. Hosting starts with an IP restriction and requires security verification before public access; CORS is not authentication. [Access policy and future authenticated RAG](docs/public-access.md)
 - Never commit `.env` or credentials. `VITE_*` values are public browser configuration. Retrieved documents are untrusted content and must not override application instructions.
 - Blob and Search changes are not transactional. Failed operations remain visible and retryable; crashes may require manual stale-lease recovery. [Lifecycle limitations and recovery](docs/lifecycle.md)
 
@@ -122,6 +122,7 @@ Latest local verification: **302 backend tests and 33 frontend tests passed**, a
 | [RAG implementation](docs/rag.md) | Extraction, chunking, embeddings, Search schema, retrieval, grounding and individual Azure smoke tests |
 | [Document lifecycle](docs/lifecycle.md) | Duplicate detection, listing/deletion contracts, consistency, legacy documents and recovery |
 | [Evaluation](docs/evaluation.md) | Dataset, metrics, failure diagnosis, controlled-corpus experiment and live evaluation commands |
+| [Public access](docs/public-access.md) | Demo isolation, anonymous usage limits and future authentication/ownership requirements |
 | [Deployment](docs/deployment.md) | Docker, production settings, HTTPS/CORS, managed identity/RBAC, probes, IP restrictions and manual deployment |
 | [Repository instructions](AGENTS.md) | Architecture principles, testing expectations, security rules and milestone boundaries |
 

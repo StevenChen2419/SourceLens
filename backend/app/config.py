@@ -3,6 +3,7 @@
 from pathlib import Path
 from ipaddress import ip_address
 from typing import Literal, Self
+from uuid import UUID
 from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
@@ -15,6 +16,36 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         env_prefix="KNOWLEDGEOPS_",
     )
+
+    app_mode: Literal["development", "public_demo"] | None = Field(default=None, validation_alias="APP_MODE")
+    demo_document_id: UUID | None = Field(default=None, validation_alias="DEMO_DOCUMENT_ID")
+    demo_requests_per_minute: int = Field(default=5, ge=1, le=20, validation_alias="DEMO_REQUESTS_PER_MINUTE")
+    demo_global_requests_per_minute: int = Field(default=20, ge=1, le=60, validation_alias="DEMO_GLOBAL_REQUESTS_PER_MINUTE")
+    demo_global_requests_per_day: int = Field(default=100, ge=1, le=500, validation_alias="DEMO_GLOBAL_REQUESTS_PER_DAY")
+    demo_max_concurrency: int = Field(default=1, ge=1, le=2, validation_alias="DEMO_MAX_CONCURRENCY")
+    demo_max_question_chars: int = Field(default=500, ge=1, le=1000, validation_alias="DEMO_MAX_QUESTION_CHARS")
+    demo_max_body_bytes: int = Field(default=8192, ge=128, le=16384, validation_alias="DEMO_MAX_BODY_BYTES")
+    demo_top_k: int = Field(default=5, ge=1, le=5, validation_alias="DEMO_TOP_K")
+    demo_max_completion_tokens: int = Field(default=2048, ge=512, le=4096, validation_alias="DEMO_MAX_COMPLETION_TOKENS")
+    demo_request_timeout_seconds: float = Field(default=45, ge=1, le=90, validation_alias="DEMO_REQUEST_TIMEOUT_SECONDS")
+    demo_body_timeout_seconds: float = Field(default=5, ge=1, le=10, validation_alias="DEMO_BODY_TIMEOUT_SECONDS")
+    demo_azure_timeout_seconds: float = Field(default=15, ge=1, le=30, validation_alias="DEMO_AZURE_TIMEOUT_SECONDS")
+    demo_azure_max_retries: int = Field(default=0, ge=0, le=1, validation_alias="DEMO_AZURE_MAX_RETRIES")
+
+    @model_validator(mode="after")
+    def validate_access_mode(self) -> Self:
+        if self.environment == "production" and self.app_mode != "public_demo":
+            raise ValueError("Production requires explicit APP_MODE=public_demo; development and authenticated modes are not public modes")
+        if self.app_mode is None:
+            self.app_mode = "development"
+        if self.app_mode == "public_demo":
+            if self.demo_document_id is None:
+                raise ValueError("Public demo requires DEMO_DOCUMENT_ID for the approved employee-handbook.pdf")
+            if self.azure_search_index_name == "knowledgeops-eval-chunks":
+                raise ValueError("The historical evaluation index cannot host the public demo")
+            if not self.azure_search_endpoint:
+                raise ValueError("Public demo requires AZURE_SEARCH_ENDPOINT")
+        return self
 
     app_name: str = Field(default="SourceLens", min_length=1)
     environment: Literal["development", "production"] = "development"

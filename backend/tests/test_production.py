@@ -10,7 +10,8 @@ from app.main import create_app
 
 def production_values():
     return dict(
-        environment="production",
+        environment="production", APP_MODE="public_demo",
+        DEMO_DOCUMENT_ID="00000000-0000-4000-8000-000000000001",
         cors_origins=["https://knowledgeops.example.com"],
         AZURE_TOKEN_CREDENTIALS="ManagedIdentityCredential",
         AZURE_STORAGE_ACCOUNT_URL="https://storage.example.com",
@@ -82,13 +83,13 @@ def test_production_health_and_exact_cors_without_azure(monkeypatch):
     application = create_app(Settings(_env_file=None, **production_values()))
     with TestClient(application) as client:
         assert client.get("/health").json() == {"status": "ok"}
-        for method in ["GET", "POST", "DELETE"]:
+        for method, path in [("GET", "/api/config"), ("POST", "/api/answers")]:
             for origin, status in [
                 ("https://knowledgeops.example.com", 200),
                 ("https://knowledgeops.example.com.evil.example", 400),
                 ("http://localhost:5173", 400),
             ]:
-                response = client.options("/api/documents", headers={
+                response = client.options(path, headers={
                     "Origin": origin, "Access-Control-Request-Method": method,
                     "Access-Control-Request-Headers": "content-type",
                 })

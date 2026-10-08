@@ -1,6 +1,7 @@
+import * as api from '../api';
 import { act, render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 import { DocumentList } from './DocumentList';
 import App from '../App';
 
@@ -31,7 +32,7 @@ it('shows list failure and recovers on refresh', async () => {
     .mockResolvedValueOnce(response({ documents: [] }));
   vi.stubGlobal('fetch', fetch);
   render(<DocumentList revision={0} />);
-  expect(await screen.findByRole('alert')).toHaveTextContent(/backend is running/);
+  expect(await screen.findByRole('alert')).toHaveTextContent(/Unable to reach SourceLens/);
   expect(screen.queryByText('No documents yet.')).not.toBeInTheDocument();
   await userEvent.setup().click(screen.getByRole('button', { name: 'Refresh documents' }));
   expect(await screen.findByText('No documents yet.')).toBeInTheDocument();
@@ -146,4 +147,12 @@ it('a stale list response cannot restore a document removed by deletion', async 
   await screen.findByText('Document and original PDF deleted.');
   await act(async () => finishRefresh(response({ documents: [document] })));
   expect(screen.queryByText('lifecycle.pdf')).not.toBeInTheDocument();
+});
+
+// Existing full-application tests explicitly select development capabilities.
+beforeEach(() => {
+  vi.spyOn(api, 'getPublicConfiguration').mockResolvedValue({
+    mode: 'development', can_manage_documents: true, max_question_chars: 4000,
+    demo_filename: null, suggested_questions: [],
+  });
 });

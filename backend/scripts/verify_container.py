@@ -32,7 +32,7 @@ for name in ('cl100k_base', 'o200k_base'):
 print('PASS: both tokenizer caches work with --network none', flush=True)
 
 # Validate that the actual container default command starts with production settings.
-process = subprocess.Popen(['python', '-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--workers', '1'])
+process = subprocess.Popen(['python', '-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--workers', '1', '--no-proxy-headers'])
 try:
     for attempt in range(50):
         if process.poll() is not None:
@@ -41,7 +41,17 @@ try:
             with urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=1) as response:
                 assert response.status == 200
                 assert json.load(response) == {'status': 'ok'}
-            print('PASS: production /health returns 200 with expected JSON, without Azure', flush=True)
+            with urllib.request.urlopen('http://127.0.0.1:8000/api/config', timeout=1) as response:
+                config = json.load(response)
+                assert config['mode'] == 'public_demo' and not config['can_manage_documents']
+            import urllib.error
+            for path in ('/docs', '/openapi.json', '/api/documents', '/api/retrieval', '/unknown'):
+                try:
+                    urllib.request.urlopen('http://127.0.0.1:8000' + path, timeout=1)
+                    raise AssertionError('Forbidden route was exposed: ' + path)
+                except urllib.error.HTTPError as error:
+                    assert error.code == 403
+            print('PASS: production health, public capabilities, and blocked routes without Azure', flush=True)
             break
         except OSError:
             time.sleep(0.2)
@@ -57,9 +67,11 @@ def main() -> None:
     image = sys.argv[1] if len(sys.argv) > 1 else 'sourcelens-backend:readiness'
     config = json.loads(subprocess.check_output(['docker', 'image', 'inspect', image]))[0]['Config']
     assert config['User'] == '10001:10001'
-    assert config['Cmd'] == ['python', '-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--workers', '1']
+    assert config['Cmd'] == ['python', '-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--workers', '1', '--no-proxy-headers']
     command = ['docker', 'run', '--rm', '-i', '--network', 'none', '--cpus', '0.5', '--memory', '1g']
     values = {
+        'APP_MODE': 'public_demo',
+        'DEMO_DOCUMENT_ID': '00000000-0000-4000-8000-000000000001',
         'KNOWLEDGEOPS_CORS_ORIGINS': '["https://frontend.example.com"]',
         'AZURE_STORAGE_ACCOUNT_URL': 'https://storage.example.com',
         'AZURE_SEARCH_ENDPOINT': 'https://search.example.com',

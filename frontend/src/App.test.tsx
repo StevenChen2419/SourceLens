@@ -1,6 +1,7 @@
+import * as api from './api';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
 const citation = {
@@ -26,12 +27,12 @@ function mockResponse(body: unknown, status = 200) {
 }
 async function ask() {
   const user = userEvent.setup();
-  await user.type(screen.getByLabelText('Your question'), '  How much vacation?  ');
+  await user.type(await screen.findByLabelText('Your question'), '  How much vacation?  ');
   await user.click(screen.getByRole('button', { name: /Ask question/ }));
 }
 async function selectPdf() {
   const file = new File(['%PDF-test'], 'handbook.pdf', { type: 'application/pdf' });
-  await userEvent.setup().upload(screen.getByLabelText('Choose PDF'), file);
+  await userEvent.setup().upload(await screen.findByLabelText('Choose PDF'), file);
   return file;
 }
 
@@ -75,10 +76,10 @@ describe('document upload', () => {
     expect(screen.queryByText(/secret-internal-id/)).not.toBeInTheDocument();
   });
 
-  it('accepts a dropped PDF but rejects multiple files and non-PDF files locally', () => {
+  it('accepts a dropped PDF but rejects multiple files and non-PDF files locally', async () => {
     const fetch = mockResponse({});
     render(<App />);
-    const zone = screen.getByText('Drop a PDF here').closest('.drop-zone')!;
+    const zone = (await screen.findByText('Drop a PDF here')).closest('.drop-zone')!;
     const pdf = new File(['pdf'], 'dropped.pdf', { type: 'application/pdf' });
     fireEvent.drop(zone, { dataTransfer: { files: [pdf] } });
     expect(screen.getByText('dropped.pdf')).toBeInTheDocument();
@@ -123,7 +124,7 @@ describe('grounded answers', () => {
     const fetch = vi.fn().mockReturnValue(new Promise<Response>(resolve => { complete = resolve; }));
     installFetch(fetch);
     render(<App />);
-    expect(screen.getByRole('button', { name: /Ask question/ })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: /Ask question/ })).toBeDisabled();
     await ask();
     expect(screen.getByText('Looking through your documents')).toBeInTheDocument();
     expect(screen.getByLabelText('Your question')).toBeDisabled();
@@ -146,6 +147,14 @@ describe('grounded answers', () => {
     installFetch(vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     render(<App />);
     await ask();
-    expect(await screen.findByRole('alert')).toHaveTextContent(/backend is running/);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Unable to reach SourceLens/);
+  });
+});
+
+// Existing full-application tests explicitly select development capabilities.
+beforeEach(() => {
+  vi.spyOn(api, 'getPublicConfiguration').mockResolvedValue({
+    mode: 'development', can_manage_documents: true, max_question_chars: 4000,
+    demo_filename: null, suggested_questions: [],
   });
 });

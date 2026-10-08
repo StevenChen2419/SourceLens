@@ -24,6 +24,8 @@
         "resources": { "cpu": 0.5, "memory": "1Gi" },
         "env": [
           { "name": "KNOWLEDGEOPS_ENVIRONMENT", "value": "production" },
+          { "name": "APP_MODE", "value": "public_demo" },
+          { "name": "DEMO_DOCUMENT_ID", "value": "<verified-employee-handbook-document-uuid>" },
           { "name": "KNOWLEDGEOPS_CORS_ORIGINS", "value": "[\"https://<frontend-hostname>\"]" },
           { "name": "AZURE_TOKEN_CREDENTIALS", "value": "ManagedIdentityCredential" },
           { "name": "AZURE_STORAGE_ACCOUNT_URL", "value": "https://<storage-account>.blob.core.windows.net" },
@@ -39,7 +41,19 @@
           { "name": "AZURE_GENERATION_DEPLOYMENT", "value": "<existing-generation-deployment>" },
           { "name": "GENERATION_CONTEXT_TOKENS", "value": "8000" },
           { "name": "GENERATION_MAX_COMPLETION_TOKENS", "value": "4096" },
-          { "name": "RETRIEVAL_TOP_K", "value": "5" }
+          { "name": "RETRIEVAL_TOP_K", "value": "5" },
+          { "name": "DEMO_REQUESTS_PER_MINUTE", "value": "5" },
+          { "name": "DEMO_GLOBAL_REQUESTS_PER_MINUTE", "value": "20" },
+          { "name": "DEMO_GLOBAL_REQUESTS_PER_DAY", "value": "100" },
+          { "name": "DEMO_MAX_CONCURRENCY", "value": "1" },
+          { "name": "DEMO_MAX_QUESTION_CHARS", "value": "500" },
+          { "name": "DEMO_MAX_BODY_BYTES", "value": "8192" },
+          { "name": "DEMO_TOP_K", "value": "5" },
+          { "name": "DEMO_MAX_COMPLETION_TOKENS", "value": "2048" },
+          { "name": "DEMO_REQUEST_TIMEOUT_SECONDS", "value": "45" },
+          { "name": "DEMO_BODY_TIMEOUT_SECONDS", "value": "5" },
+          { "name": "DEMO_AZURE_TIMEOUT_SECONDS", "value": "15" },
+          { "name": "DEMO_AZURE_MAX_RETRIES", "value": "0" }
         ],
         "probes": [
           { "type": "Startup", "httpGet": { "path": "/health", "port": 8000, "scheme": "HTTP" }, "initialDelaySeconds": 1, "periodSeconds": 5, "timeoutSeconds": 2, "failureThreshold": 30 },

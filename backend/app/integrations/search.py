@@ -78,6 +78,14 @@ class SearchStore:
         self.endpoint = settings.azure_search_endpoint
         self.index_name = settings.azure_search_index_name
         self.dimensions = settings.embedding_dimensions
+        self.query_timeout = settings.demo_azure_timeout_seconds if settings.app_mode == "public_demo" else None
+        self.query_retries = settings.demo_azure_max_retries if settings.app_mode == "public_demo" else None
+
+    def _query_options(self) -> dict:
+        if self.query_timeout is None:
+            return {}
+        return {"connection_timeout": self.query_timeout, "read_timeout": self.query_timeout,
+                "retry_total": self.query_retries}
 
     def _require_endpoint(self) -> str:
         if not self.endpoint:
@@ -172,7 +180,7 @@ class SearchStore:
     def document_chunks(self, document_id: UUID | None = None) -> list[dict]:
         """Enumerate metadata for lifecycle operations, including every SDK page."""
         try:
-            with DefaultAzureCredential() as credential, SearchClient(self._require_endpoint(), self.index_name, credential) as client:
+            with DefaultAzureCredential() as credential, SearchClient(self._require_endpoint(), self.index_name, credential, **self._query_options()) as client:
                 results = client.search(
                     search_text="*", filter=f"document_id eq '{UUID(str(document_id))}'" if document_id else None,
                     select=["document_id", "filename", "page_number", "chunk_id", "chunk_index"],
@@ -205,19 +213,26 @@ class SearchStore:
         if self.document_chunks(document_id):
             raise SearchError("Deleted chunks are still visible in Search. Wait briefly and retry deletion.")
 
-    def hybrid_search(self, question: str, vector: list[float], top_k: int) -> list[RetrievedChunk]:
+    def hybrid_search(self, question: str, vector: list[float], top_k: int, *, document_id: UUID | None = None, filename: str | None = None) -> list[RetrievedChunk]:
         endpoint = self._require_endpoint()
         if not 1 <= top_k <= 20:
             raise ValueError("top_k must be between 1 and 20")
         if len(vector) != self.dimensions or any(not math.isfinite(value) for value in vector):
             raise SearchError("Question vector does not match the configured embedding dimensions/values.")
         fields = ["document_id", "filename", "page_number", "chunk_id", "chunk_index", "text"]
+        scope = {}
+        if document_id is not None:
+            safe_id = str(UUID(str(document_id)))
+            scope = {"filter": f"document_id eq '{safe_id}'", "vector_filter_mode": "preFilter"}
+            if filename is not None:
+                scope["filter"] += " and filename eq '" + filename.replace("'", "''") + "'"
+        client_options = self._query_options()
         try:
-            with DefaultAzureCredential() as credential, SearchClient(endpoint, self.index_name, credential) as client:
+            with DefaultAzureCredential() as credential, SearchClient(endpoint, self.index_name, credential, **client_options) as client:
                 results = client.search(
                     search_text=question, search_fields=["text"], query_type="simple",
                     vector_queries=[VectorizedQuery(vector=vector, fields="embedding", k_nearest_neighbors=50)],
-                    select=fields, top=top_k,
+                    select=fields, top=top_k, **scope,
                 )
                 # Consume lazy SDK results while the client is open; preserve RRF order.
                 return [RetrievedChunk(

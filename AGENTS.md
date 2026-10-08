@@ -21,9 +21,9 @@ Branding is SourceLens (formerly KnowledgeOps). Preserve legacy `KNOWLEDGEOPS_*`
 
 ## Current milestone
 
-Production deployment readiness (explicitly authorized out of sequence). Milestone 1 and document lifecycle live verification are complete. Evaluation baselines remain preserved.
+Public demo security and production deployment readiness (explicitly authorized out of sequence). Milestone 1 and document lifecycle live verification are complete. Evaluation baselines remain preserved.
 
-Approved architecture: Static Web Apps Free, Container Apps Consumption (0.5 vCPU, 1 GiB, 0–1 replicas, one worker), system-assigned managed identity, existing Azure data/model resources, exact HTTPS CORS, and initial backend ingress IP restriction. Implement local readiness only; do not provision/change Azure resources or add deployment/CD workflows without a new request. See docs/deployment.md.
+Approved architecture: Static Web Apps Free, Container Apps Consumption (0.5 vCPU, 1 GiB, 0–1 replicas, one worker), system-assigned managed identity, existing Azure data/model resources, exact HTTPS CORS, and initial backend ingress IP restriction. Anonymous public-demo access is authorized for local implementation with explicit APP_MODE, server-enforced corpus isolation and usage limits. Production must reject development/unknown modes; authenticated full RAG remains design-only. Implement local readiness only; do not provision/change Azure resources or add deployment/CD workflows without a new request. See docs/deployment.md.
 
 Establish a repeatable evaluation baseline before tuning retrieval or generation. Live Azure evaluation is an explicit command, separate from mocked/offline unit tests.
 

@@ -19,12 +19,12 @@ export interface DocumentDeleteResponse {
 }
 
 export interface Citation {
-  source_id: string;
-  document_id: string;
+  source_id?: string;
+  document_id?: string;
   filename: string;
   page_number: number;
-  chunk_id: string;
-  chunk_index: number;
+  chunk_id?: string;
+  chunk_index?: number;
 }
 
 export interface AnswerResponse {
@@ -32,4 +32,12 @@ export interface AnswerResponse {
   status: 'supported' | 'insufficient_evidence';
   answer: string;
   citations: Citation[];
+}
+
+export interface PublicConfiguration {
+  mode: 'development' | 'public_demo';
+  can_manage_documents: boolean;
+  max_question_chars: number;
+  demo_filename: string | null;
+  suggested_questions: string[];
 }

@@ -6,7 +6,7 @@ Finding a policy in a collection of PDFs takes time. A generated answer is only 
 
 Built with **Python 3.12, FastAPI, React, TypeScript, Azure AI Search, Azure Blob Storage, and Microsoft Foundry**.
 
-**Status:** Local end-to-end flows have been verified against live Azure services. Public-demo restrictions and offline Docker container verification are complete. Frontend/backend hosting has **not been deployed**, and there is no public hosted demo or CD pipeline.
+**Status:** Local end-to-end flows have been verified against live Azure services. Public-demo backend answers and restrictions have also been verified locally against live Azure services; offline Docker container verification is complete. Visual verification of the public-demo UI remains manual. Frontend/backend hosting has **not been deployed**, and there is no public hosted demo or CD pipeline.
 
 [Demo](#demo) · [Features](#technical-features) · [Architecture](#architecture) · [Evaluation](#measured-evaluation-results) · [Run locally](#run-locally) · [Documentation](#technical-documentation)
 

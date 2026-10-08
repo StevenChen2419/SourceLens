@@ -2,6 +2,16 @@
 
 [Project overview](../README.md) | [Deployment](deployment.md) | [Lifecycle](lifecycle.md)
 
+## Local verification status
+
+On October 8, 2026, a separate loopback-only public-demo backend was verified against existing Azure services. The approved `employee-handbook.pdf` had six pages and six chunks; every indexed chunk's text, key and page metadata matched the original Blob PDF, and all vectors had 1536 finite dimensions. The local PDF matched the stored original. No Azure documents, indexes, resources or deployments were changed.
+
+The three suggested questions returned HTTP 200: vacation produced 15 paid days per calendar year with page 1, remote work produced up to three days per week with manager approval and page 2, and the Japan question returned `insufficient_evidence` without citations. Public responses contained only the question, status, answer and filename/page citations.
+
+Live localhost checks confirmed health/config access, blocked management/retrieval/docs/unknown routes (403), rejected document/index selectors and oversized questions (422), oversized bodies (413), exact-origin CORS and rate limiting (429), including rejection of a forged forwarded-IP bypass. The rate window recovered without restarting the backend. Only the three answer requests invoked AI services; safeguard probes used invalid requests that never entered the RAG pipeline.
+
+The offline suite passed 366 backend tests and 42 frontend tests; TypeScript checks and the frontend production build passed. Concurrency, timeout, safe failure handling, corpus isolation failures and development-mode regressions were verified with mocks. Vite served the frontend with the correct local API URL. Browser automation could not start because of a Windows sandbox error, so visual verification of the public-demo interface remains manual. Hosted ingress, managed identity/RBAC, proxy behavior and hosted frontend verification remain pending. This is local verification, not a deployment claim.
+
 ## Implemented modes
 
 One application and one RAG pipeline serve two implemented modes:

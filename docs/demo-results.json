@@ -1,0 +1,39 @@
+{
+  "description": "Recorded SourceLens demo responses from POST /api/answers with one indexed employee-handbook.pdf (6 pages, 6 chunks). Citation entries retain public filename/page metadata only. This demo is separate from the historical 26-case evaluation.",
+  "recorded_at_utc": "2026-10-08T17:39:29.5977243Z",
+  "corpus": {
+    "chunk_count": 6,
+    "filename": "employee-handbook.pdf",
+    "page_count": 6
+  },
+  "responses": [
+    {
+      "question": "How many vacation days do full-time employees receive per calendar year?",
+      "status": "supported",
+      "answer": "Full-time employees receive 15 days of paid vacation per calendar year.",
+      "citations": [
+        {
+          "filename": "employee-handbook.pdf",
+          "page_number": 1
+        }
+      ]
+    },
+    {
+      "question": "How many days per week may employees work remotely, and whose approval is required?",
+      "status": "supported",
+      "answer": "Employees may work remotely for up to three days per week, with manager approval required.",
+      "citations": [
+        {
+          "filename": "employee-handbook.pdf",
+          "page_number": 2
+        }
+      ]
+    },
+    {
+      "question": "What is the capital of Japan?",
+      "status": "insufficient_evidence",
+      "answer": "The retrieved documents do not contain enough evidence to answer this question.",
+      "citations": []
+    }
+  ]
+}

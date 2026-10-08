@@ -16,17 +16,19 @@ Built with **Python 3.12, FastAPI, React, TypeScript, Azure AI Search, Azure Blo
 
 Upload a PDF, ask a question, and receive a grounded answer with page-level citations.
 
-### Verified outputs
+### Example outputs
 
-These are actual outputs from the September 29, 2026 live Azure evaluation of a synthetic employee handbook, not simulated UI responses:
+Recorded from the clean `employee-handbook.pdf` demo corpus on October 8, 2026:
 
-| Question | Recorded answer | Citation |
+| Question | Answer | Citation |
 | --- | --- | --- |
-| How many vacation days do full-time employees receive per calendar year? | Full-time employees receive 15 days of paid vacation per calendar year. | `knowledgeops-retrieval-test.pdf`, page 1 |
-| How many days per week may employees work remotely, and whose approval is required? | Employees may work remotely for up to three days per week, with manager approval required. | `knowledgeops-retrieval-test.pdf`, page 2 |
+| How many vacation days do full-time employees receive per calendar year? | Full-time employees receive 15 days of paid vacation per calendar year. | `employee-handbook.pdf`, page 1 |
+| How many days per week may employees work remotely, and whose approval is required? | Employees may work remotely for up to three days per week, with manager approval required. | `employee-handbook.pdf`, page 2 |
 | What is the capital of Japan? | The retrieved documents do not contain enough evidence to answer this question. | None; `insufficient_evidence` |
 
-[Recorded outputs and run provenance](docs/evaluation-results.json) · [Reproduce the local demo](docs/development.md#run-the-complete-local-application)
+The reproducible 26-case Azure evaluation uses the versioned synthetic evaluation corpus and is reported separately in the [Evaluation section](#measured-evaluation-results) below.
+
+[Recorded demo responses](docs/demo-results.json) · [Reproduce the local demo](docs/development.md#run-the-complete-local-application)
 
 ## Technical features
 

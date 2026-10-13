@@ -96,6 +96,13 @@ h4 {
   font-size:23px;
 }
 
+.arrow-up-right {
+  width:1em;
+  height:1em;
+  vertical-align:-.125em;
+  flex-shrink:0;
+}
+
 .brand-mark span {
   font-size:13px;
   color:#c7dd9c;

@@ -1,3 +1,4 @@
+import { ArrowUpRight } from './ArrowUpRight';
 import { useState, type FormEvent } from 'react';
 import { askQuestion } from '../api';
 import type { AnswerResponse } from '../types';
@@ -41,7 +42,7 @@ export function AnswerWorkspace({ maxQuestionChars = 4000, suggestedQuestions = 
         <div className="question-actions">
           <span id="question-help" className="small muted">One question at a time. Up to {maxQuestionChars.toLocaleString()} characters.</span>
           <button className="button primary" disabled={busy || !question.trim()} type="submit">
-            {busy ? 'Finding your answer…' : 'Ask question'}<span aria-hidden="true">↗</span>
+            {busy ? 'Finding your answer…' : 'Ask question'}<span aria-hidden="true"><ArrowUpRight /></span>
           </button>
         </div>
       </form>
@@ -63,7 +64,7 @@ export function AnswerWorkspace({ maxQuestionChars = 4000, suggestedQuestions = 
         {answer.status === 'supported' && citations.length > 0 && <div className="sources">
           <h4>Sources</h4>
           <ul>{citations.map(citation => <li key={`${citation.document_id ?? citation.filename}:${citation.page_number}`}>
-            <span aria-hidden="true" className="source-icon">↗</span><span>{citation.filename} <span className="page">· Page {citation.page_number}</span></span>
+            <span aria-hidden="true" className="source-icon"><ArrowUpRight /></span><span>{citation.filename} <span className="page">· Page {citation.page_number}</span></span>
           </li>)}</ul>
           <p className="small muted">Check these pages in your original PDF.</p>
         </div>}

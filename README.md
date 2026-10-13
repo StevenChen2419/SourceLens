@@ -10,11 +10,15 @@ Built with **Python 3.12, FastAPI, React, TypeScript, Azure AI Search, Azure Blo
 
 **Deployment:** React on Azure Static Web Apps Free; FastAPI on Azure Container Apps Consumption. Hosted answers, citations, and public-demo restrictions have been verified. Deployment is manual; no CD pipeline is configured.
 
-[Demo](#demo) · [Features](#technical-features) · [Architecture](#architecture) · [Evaluation](#measured-evaluation-results) · [Security](#scope-and-security) · [Run locally](#run-locally) · [Documentation](#technical-documentation)
+[Watch the Demo](#watch-the-demo) · [Demo](#demo) · [Features](#technical-features) · [Architecture](#architecture) · [Evaluation](#measured-evaluation-results) · [Security](#scope-and-security) · [Run locally](#run-locally) · [Documentation](#technical-documentation)
+
+## Watch the Demo
+
+[![Watch the SourceLens portfolio demo](docs/images/sourcelens-demo.png)](https://youtu.be/uBj-TnuC2TQ)
+
+**[Watch the portfolio video on YouTube](https://youtu.be/uBj-TnuC2TQ)** to see both the publicly hosted Azure demo and the full local application, including PDF upload, indexing, grounded answers with citations, insufficient-evidence handling, and document deletion in trusted development mode.
 
 ## Demo
-
-![SourceLens document Q&A interface](docs/images/sourcelens-demo.png)
 
 Upload a PDF in trusted development mode, ask a question, and receive a grounded answer with page-level citations. The screenshot shows that full local workspace; upload and document management are unavailable in the hosted demo.
 
